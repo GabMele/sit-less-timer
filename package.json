@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
+    "build:exe": "tauri build --no-bundle",
+    "msix": "powershell -ExecutionPolicy Bypass -File build/make-msix.ps1",
     "icons": "tauri icon build/icon.png"
   },
   "devDependencies": {
