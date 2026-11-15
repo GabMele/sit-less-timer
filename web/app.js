@@ -229,7 +229,7 @@
     tBot.textContent = status === 'idle' ? '' : down
       ? (over ? `${alertIdx}/${S.reps}` : t('spent', fmtClock(el)))
       : over ? t('over', fmtClock(el - T), `${alertIdx}/${S.reps}`) : t('left', fmtClock(Math.ceil((T - el) / 1000) * 1000));
-    document.title = status === 'idle' ? 'Timer' : `${txt} – Timer`;
+    document.title = status === 'idle' ? 'Sit-less Timer' : `${txt} – Sit-less Timer`;
 
     // barra delle applicazioni
     let key;

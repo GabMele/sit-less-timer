@@ -12,5 +12,5 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .run(tauri::generate_context!())
-        .expect("errore nell'avvio di Timer");
+        .expect("errore nell'avvio di Sit-less Timer");
 }
