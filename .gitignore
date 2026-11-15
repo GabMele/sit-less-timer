@@ -7,3 +7,4 @@ Timer.vbs
 *.pfx
 .env
 src-tauri/target/
+src-tauri/gen/

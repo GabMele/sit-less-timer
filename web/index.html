@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <title>Timer</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ipc: http://ipc.localhost">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
 </head>
 <body data-status="idle">
 
-<div id="bar">
+<div id="bar" data-tauri-drag-region>
   <button class="ib" id="btnSum" data-i18n-title="title_sum">
     <svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
   </button>
@@ -19,7 +19,12 @@
   <button class="ib" id="btnAbout" data-i18n-title="title_about">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.01"/></svg>
   </button>
-  <div id="today"></div>
+  <div id="today" data-tauri-drag-region></div>
+  <div id="wc" hidden>
+    <button class="wb" id="wMin" data-i18n-title="title_min"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+    <button class="wb" id="wMax" data-i18n-title="title_max"><svg viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1"/></svg></button>
+    <button class="wb close" id="wClose" data-i18n-title="title_close"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
+  </div>
 </div>
 
 <div id="stage">
@@ -89,6 +94,7 @@
   <div id="sumBody"></div>
 </section>
 
+<script src="native-tauri.js"></script>
 <script src="i18n.js"></script>
 <script src="sounds.js"></script>
 <script src="app.js"></script>

@@ -5,6 +5,7 @@ const I18N = (() => {
 
   const T = {
     it: {
+      title_min: 'Riduci a icona', title_max: 'Ingrandisci / ripristina', title_close: 'Chiudi',
       other: 'Altro', title_other: 'Durata personalizzata (minuti)',
       mode: 'Visualizzazione', mode_up: 'Tempo trascorso (count-up)', mode_down: 'Tempo rimanente (countdown)', title_mode: 'Clicca per alternare trascorso / rimanente', remaining: 'rimanenti', beyond: 'oltre il tempo', spent: 'trascorsi {0}',
       theme: 'Tema', th_system: 'Sistema', th_light: 'Chiaro', th_dark: 'Scuro', accent: 'Colore', ac_teal: 'Turchese', ac_blue: 'Blu', ac_violet: 'Viola', ac_pink: 'Rosa', ac_orange: 'Arancio', ac_green: 'Verde',
@@ -25,6 +26,7 @@ const I18N = (() => {
       sum_hint: 'La pausa conta dal momento in cui fermi o metti in pausa il timer fino alla ripartenza (oltre 3 ore = assenza, non conteggiata).',
     },
     en: {
+      title_min: 'Minimize', title_max: 'Maximize / restore', title_close: 'Close',
       other: 'Custom', title_other: 'Custom duration (minutes)',
       mode: 'Display', mode_up: 'Elapsed time (count-up)', mode_down: 'Time left (countdown)', title_mode: 'Click to switch elapsed / remaining', remaining: 'remaining', beyond: 'past target', spent: '{0} elapsed',
       theme: 'Theme', th_system: 'System', th_light: 'Light', th_dark: 'Dark', accent: 'Color', ac_teal: 'Teal', ac_blue: 'Blue', ac_violet: 'Violet', ac_pink: 'Pink', ac_orange: 'Orange', ac_green: 'Green',
@@ -45,6 +47,7 @@ const I18N = (() => {
       sum_hint: 'A break counts from when you stop or pause the timer until you start again (over 3 hours = away, not counted).',
     },
     fr: {
+      title_min: 'Réduire', title_max: 'Agrandir / restaurer', title_close: 'Fermer',
       other: 'Autre', title_other: 'Durée personnalisée (minutes)',
       mode: 'Affichage', mode_up: 'Temps écoulé (count-up)', mode_down: 'Temps restant (compte à rebours)', title_mode: 'Cliquer pour alterner écoulé / restant', remaining: 'restant', beyond: 'dépassé', spent: '{0} écoulé',
       theme: 'Thème', th_system: 'Système', th_light: 'Clair', th_dark: 'Sombre', accent: 'Couleur', ac_teal: 'Turquoise', ac_blue: 'Bleu', ac_violet: 'Violet', ac_pink: 'Rose', ac_orange: 'Orange', ac_green: 'Vert',
@@ -65,6 +68,7 @@ const I18N = (() => {
       sum_hint: "La pause compte à partir de l'arrêt ou de la mise en pause du minuteur jusqu'à la reprise (plus de 3 h = absence, non comptée).",
     },
     es: {
+      title_min: 'Minimizar', title_max: 'Maximizar / restaurar', title_close: 'Cerrar',
       other: 'Otro', title_other: 'Duración personalizada (minutos)',
       mode: 'Visualización', mode_up: 'Tiempo transcurrido (count-up)', mode_down: 'Tiempo restante (cuenta atrás)', title_mode: 'Clic para alternar transcurrido / restante', remaining: 'restante', beyond: 'pasado', spent: '{0} transcurrido',
       theme: 'Tema', th_system: 'Sistema', th_light: 'Claro', th_dark: 'Oscuro', accent: 'Color', ac_teal: 'Turquesa', ac_blue: 'Azul', ac_violet: 'Violeta', ac_pink: 'Rosa', ac_orange: 'Naranja', ac_green: 'Verde',
