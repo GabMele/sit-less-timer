@@ -1,6 +1,6 @@
-# Microsoft Store listing — Timer
+# Microsoft Store listing — Sit-less Timer
 
-Nome: **Timer** (controlla la disponibilità del nome nel Partner Center; in caso, usa ad es. "Timer · sit less").
+Nome: **Sit-less Timer** (da riservare nel Partner Center; alternativa valutata: "Get Up Timer" con sottotitolo "analog sit-less reminder").
 Categoria: Produttività (alternativa: Salute e fitness)
 Prezzo: Gratis (piano 1)
 
@@ -15,7 +15,7 @@ Un timer analogico, nero e minimale, per non stare seduto troppo a lungo.
 
 • Quadrante a un'ora con anelli concentrici: se non lo fermi, continua a contare e aggiunge un anello per ogni ora in più.
 • Durate rapide (25′, 55′ o la tua) direttamente nel quadrante.
-• Suoni dolci e sintetizzati, ripetuti ogni pochi minuti finché non ti alzi: scegli tra 31 suoni, con melodie di pad e piano.
+• Suoni dolci e sintetizzati, ripetuti ogni pochi minuti finché non ti alzi: scegli tra 32 suoni, con 13 melodie classiche di pubblico dominio.
 • Riepilogo di tempo attivo e pause, di oggi e degli ultimi 7 giorni.
 • Finestra ridimensionabile e compatta, anche sempre in primo piano.
 • Tempo trascorso o rimanente (un clic sul numero per alternare), con avanzamento nella barra delle applicazioni.
@@ -39,7 +39,7 @@ A minimalist black analog timer that keeps you from sitting too long.
 
 • One-hour dial with concentric rings: if you don't stop it, it keeps counting and adds a ring for every extra hour.
 • Quick durations (25′, 55′ or your own) right inside the dial.
-• Gentle synthesized sounds that repeat every few minutes until you get up: choose from 31 sounds, including pad and piano melodies.
+• Gentle synthesized sounds that repeat every few minutes until you get up: choose from 32 sounds, including 13 public-domain classical melodies.
 • Summary of active time and breaks, for today and the last 7 days.
 • Compact, resizable window, with an always-on-top option.
 • Elapsed or remaining time (click the number to switch), with progress shown on the taskbar.
@@ -63,7 +63,7 @@ Un minuteur analogique noir et minimaliste pour ne pas rester assis trop longtem
 
 • Cadran d'une heure avec anneaux concentriques : si vous ne l'arrêtez pas, il continue de compter et ajoute un anneau par heure supplémentaire.
 • Durées rapides (25′, 55′ ou la vôtre) directement dans le cadran.
-• Sons doux et synthétisés, répétés toutes les quelques minutes jusqu'à ce que vous vous leviez : 31 sons au choix, dont des mélodies de pad et de piano.
+• Sons doux et synthétisés, répétés toutes les quelques minutes jusqu'à ce que vous vous leviez : 32 sons au choix, dont 13 mélodies classiques du domaine public.
 • Résumé du temps actif et des pauses, pour aujourd'hui et les 7 derniers jours.
 • Fenêtre compacte et redimensionnable, avec option « toujours au premier plan ».
 • Temps écoulé ou restant (un clic sur le chiffre pour basculer), avec la progression dans la barre des tâches.
@@ -87,7 +87,7 @@ Un temporizador analógico, negro y minimalista, para no pasar demasiado tiempo 
 
 • Esfera de una hora con anillos concéntricos: si no lo detienes, sigue contando y añade un anillo por cada hora extra.
 • Duraciones rápidas (25′, 55′ o la tuya) dentro de la esfera.
-• Sonidos suaves y sintetizados que se repiten cada pocos minutos hasta que te levantes: 31 sonidos a elegir, con melodías de pad y piano.
+• Sonidos suaves y sintetizados que se repiten cada pocos minutos hasta que te levantes: 32 sonidos a elegir, con 13 melodías clásicas de dominio público.
 • Resumen del tiempo activo y de las pausas, de hoy y de los últimos 7 días.
 • Ventana compacta y redimensionable, con opción de mantenerla siempre visible.
 • Tiempo transcurrido o restante (un clic en la cifra para alternar), con el progreso en la barra de tareas.

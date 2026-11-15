@@ -10,7 +10,7 @@
     openExternal: (u) => {
       try {
         const x = new URL(u);
-        if (x.protocol === 'https:' && (x.hostname === 'nextquo.com' || x.hostname === 'www.nextquo.com')) T.opener.openUrl(x.href);
+        if (x.protocol === 'https:' && ['nextquo.com', 'www.nextquo.com', 'ko-fi.com'].includes(x.hostname)) T.opener.openUrl(x.href);
       } catch {}
     },
     attention: () => w.requestUserAttention(2),

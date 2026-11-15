@@ -67,6 +67,14 @@
       <button class="mini" id="sPlay" data-i18n-title="play"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
     </span>
   </label>
+  <label><span data-i18n="custom"></span>
+    <span class="row">
+      <button class="mini txt" id="sLoad" type="button" data-i18n="custom_load"></button>
+      <button class="mini" id="sUnload" type="button" hidden data-i18n-title="custom_remove"><svg viewBox="0 0 24 24"><path d="M6.4 5l12.6 12.6-1.4 1.4L5 6.4zM19 6.4L6.4 19 5 17.6 17.6 5z"/></svg></button>
+      <input type="file" id="sFile" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac" hidden>
+    </span>
+  </label>
+  <p class="hint" id="customMsg" style="margin:-4px 0 9px" data-i18n="custom_hint"></p>
   <label><span data-i18n="vol"></span> <input id="sVol" type="range" min="0" max="1" step="0.05"></label>
   <label><span data-i18n="reps"></span> <input id="sReps" type="number" min="1" max="99" step="1"></label>
   <label><span data-i18n="every"></span> <input id="sEvery" type="number" min="0.5" max="60" step="0.5"></label>
@@ -87,6 +95,7 @@
   <p class="hint" data-i18n="about_desc"></p>
   <p class="about"><span data-i18n="about_by"></span> <a class="ext" href="#">nextquo.com</a></p>
   <p class="about"><span data-i18n="cta"></span> <a class="ext" href="#">nextquo.com</a></p>
+  <p class="about coffee"><a class="ext" href="#" data-url="https://ko-fi.com/gabrielem" data-i18n="coffee"></a></p>
 </section>
 
 <section class="panel" id="pSum">

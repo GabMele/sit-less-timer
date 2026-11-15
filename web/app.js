@@ -2,7 +2,7 @@
   'use strict';
   const $ = (s) => document.querySelector(s);
   const SVGNS = 'http://www.w3.org/2000/svg';
-  const native = window.native || { openExternal() {}, setOnTop() {}, getOnTop: async () => false, attention() {}, progress() {}, setTheme() {}, version: async () => '' };
+  const native = window.native || { openExternal(u) { window.open(u, '_blank', 'noopener'); }, setOnTop() {}, getOnTop: async () => false, attention() {}, progress() {}, setTheme() {}, version: async () => '' };
   native.version().then((v) => { if (v) $('#ver').textContent = 'v' + v; }).catch(() => {});
 
   /* ---------- persistenza ---------- */
@@ -12,6 +12,7 @@
   };
   const DEF = { duration: 25, presets: [25, 55], sound: 'bowl', volume: 0.7, reps: 10, every: 3, onTop: false, keep: 30, theme: 'system', accent: 'teal', mode: 'up' };
   const S = { ...DEF, ...store.get('timer.settings', {}) };
+  if (S.sound !== 'custom' && !Sounds.list.some((x) => x.id === S.sound)) S.sound = DEF.sound;   // suono rimosso da una versione precedente
   // migrazione: i vecchi preset di default (27, 52) diventano i nuovi (25, 55)
   if (Array.isArray(S.presets) && S.presets.join() === '27,52') S.presets = DEF.presets;
   if (!I18N.LANGS[S.lang]) S.lang = I18N.detect();
@@ -358,13 +359,44 @@
   const sSound = $('#sSound'), sLang = $('#sLang');
   function buildSoundOptions() {
     sSound.innerHTML = '';
-    for (const s of Sounds.list) {
-      const o = document.createElement('option');
-      o.value = s.id; o.textContent = I18N.soundName(s.id, s.name); sSound.appendChild(o);
+    for (const g of Sounds.groups) {
+      const og = document.createElement('optgroup');
+      og.label = I18N.groupName(g);
+      for (const s of Sounds.list.filter((x) => x.group === g)) {
+        const o = document.createElement('option');
+        o.value = s.id; o.textContent = I18N.soundName(s.id, s.name); og.appendChild(o);
+      }
+      sSound.appendChild(og);
     }
     sSound.value = S.sound;
   }
   buildSoundOptions();
+  const customMsg = $('#customMsg'), sUnload = $('#sUnload');
+  function syncCustom(err) {
+    sUnload.hidden = !Sounds.hasCustom;
+    customMsg.textContent = err ? I18N.t(err) : I18N.t('custom_hint');
+    customMsg.style.color = err ? 'var(--accent)' : '';
+  }
+  Sounds.loadCustom().then(() => {
+    if (S.sound === 'custom' && !Sounds.hasCustom) { S.sound = DEF.sound; saveS(); }
+    buildSoundOptions(); syncCustom();
+  });
+  $('#sLoad').addEventListener('click', () => $('#sFile').click());
+  $('#sFile').addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    try {
+      await Sounds.setCustom(f);
+      S.sound = 'custom'; saveS(); buildSoundOptions(); syncCustom();
+      Sounds.play(S.sound, S.volume);
+    } catch (err) { syncCustom(err.message === 'size' ? 'custom_err_size' : 'custom_err_fmt'); }
+  });
+  sUnload.addEventListener('click', async () => {
+    await Sounds.clearCustom();
+    if (S.sound === 'custom') { S.sound = DEF.sound; saveS(); }
+    buildSoundOptions(); syncCustom();
+  });
   for (const [k, v] of Object.entries(I18N.LANGS)) {
     const o = document.createElement('option'); o.value = k; o.textContent = v; sLang.appendChild(o);
   }
@@ -413,7 +445,14 @@
   native.setOnTop(S.onTop);
 
   sSound.addEventListener('change', () => { S.sound = sSound.value; saveS(); Sounds.play(S.sound, S.volume); });
-  $('#sPlay').addEventListener('click', () => Sounds.play(S.sound, S.volume));
+  const sPlay = $('#sPlay');
+  const PLAY_ICON = '<path d="M8 5.5v13l11-6.5z"/>', STOP_ICON = '<rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/>';
+  Sounds.onState = (playing) => {
+    sPlay.querySelector('svg').innerHTML = playing ? STOP_ICON : PLAY_ICON;
+    sPlay.title = t(playing ? 'stop' : 'play');
+    sPlay.setAttribute('aria-label', sPlay.title);
+  };
+  sPlay.addEventListener('click', () => { if (Sounds.playing) Sounds.stop(); else Sounds.play(S.sound, S.volume); });
   $('#sVol').addEventListener('change', () => { S.volume = Number($('#sVol').value); saveS(); Sounds.play(S.sound, S.volume); });
   $('#sReps').addEventListener('input', () => {
     const v = Math.round(Number($('#sReps').value));
@@ -452,11 +491,14 @@
   const DAYF = { weekday: 'short', day: 'numeric', month: 'short' };
   function renderSummary() {
     const st = stats(0);
+    const tot = Math.max(1, st.a + st.p);
+    const pct = (v) => Math.min(100, Math.max(0, v) * 100).toFixed(1);
+    const bar = (cls, f) => `<em class="tb"><i class="${cls}" style="width:${pct(f)}%"></i></em>`;
     let h = `<div class="tiles">
-      <div class="tile a"><b>${fmtDur(st.a)}</b><span>${t('tile_a')}</span></div>
-      <div class="tile p"><b>${fmtDur(st.p)}</b><span>${t('tile_p')}</span></div>
-      <div class="tile"><b>${fmtDur(st.maxA)}</b><span>${t('tile_max')}</span></div>
-      <div class="tile"><b>${st.nP}</b><span>${t('tile_n')}</span></div>
+      <div class="tile a"><b>${fmtDur(st.a)}</b><span>${t('tile_a')}</span>${bar('a', st.a / tot)}</div>
+      <div class="tile p"><b>${fmtDur(st.p)}</b><span>${t('tile_p')}</span>${bar('p', st.p / tot)}</div>
+      <div class="tile"><b>${fmtDur(st.maxA)}</b><span>${t('tile_max')}</span>${bar('a', st.a ? st.maxA / st.a : 0)}</div>
+      <div class="tile"><b>${st.nP}</b><span>${t('tile_n')}</span>${bar('p', Math.min(st.nP / 10, 1))}</div>
     </div>`;
     if (st.segs.length) {
       const t0 = st.segs[0].s, t1 = Math.max(st.segs[st.segs.length - 1].e, t0 + 60000), span = t1 - t0;
@@ -471,9 +513,11 @@
     h += `<div class="sub">${t('last7')}</div>`;
     for (const d of days) {
       const date = new Date(); date.setDate(date.getDate() - d.o);
-      h += `<div class="day"><span>${d.o === 0 ? t('today') : date.toLocaleDateString(I18N.locale(), DAYF)}</span>
+      const wd = date.toLocaleDateString(I18N.locale(), { weekday: 'short' }).replace('.', '');
+      const dm = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+      h += `<div class="day"><span>${d.o === 0 ? t('today') : `${wd} ${dm}`}</span>
         <div class="bars"><i class="a" style="width:${(d.a / max) * 100}%"></i><i class="p" style="width:${(d.p / max) * 100}%"></i></div>
-        <small>${fmtDur(d.a)} ${t('act')} · ${fmtDur(d.p)} ${t('brk')}</small></div>`;
+        <small title="${t('act')} / ${t('brk')}">${fmtDur(d.a)} · ${fmtDur(d.p)}</small></div>`;
     }
     h += `<p class="hint">${t('sum_hint')}</p>`;
     $('#sumBody').innerHTML = h;
@@ -484,7 +528,7 @@
 
   document.querySelectorAll('.ext').forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();
-    native.openExternal('https://nextquo.com/?utm_source=timer-app&utm_medium=app');
+    native.openExternal(a.dataset.url || 'https://nextquo.com/?utm_source=timer-app&utm_medium=app');
   }));
 
   /* ---------- avvio ---------- */

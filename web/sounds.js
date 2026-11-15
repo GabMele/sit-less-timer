@@ -1,6 +1,8 @@
-// 20 suoni dolci sintetizzati con WebAudio (nessun file audio necessario)
+// suoni dolci e melodie classiche di pubblico dominio sintetizzati con WebAudio (nessun file audio necessario)
 const Sounds = (() => {
-  let ctx, master, bus;
+  let ctx, master, bus, conv, current;
+  let custom = null;   // brano dell'utente: { name, buffer }
+  const CUSTOM_MAX = 30, CUSTOM_FADE = 3, CUSTOM_BYTES = 10 * 1024 * 1024;
 
   function init() {
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
@@ -17,15 +19,35 @@ const Sounds = (() => {
       const d = buf.getChannelData(c);
       for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
     }
-    const conv = ctx.createConvolver();
+    conv = ctx.createConvolver();
     conv.buffer = buf;
     const wet = ctx.createGain();
     wet.gain.value = 0.28;
     conv.connect(wet);
     wet.connect(master);
-    bus = ctx.createGain();
-    bus.connect(master);
-    bus.connect(conv);
+  }
+
+  function newBus(dry) {
+    const b = ctx.createGain();
+    b.connect(master);
+    if (!dry) b.connect(conv);
+    return b;
+  }
+
+  // ferma il suono in corso con una dissolvenza rapida
+  let playEnd = 0, endTimer = null, onState = null;   // fine prevista del suono in corso
+  const notify = (p) => { if (onState) onState(p); };
+  function stop() {
+    clearTimeout(endTimer);
+    if (!current) return;
+    notify(false);
+    const b = current;
+    current = null;
+    const t = ctx.currentTime;
+    b.gain.cancelScheduledValues(t);
+    b.gain.setValueAtTime(b.gain.value, t);
+    b.gain.linearRampToValueAtTime(0, t + 0.06);
+    setTimeout(() => { try { b.disconnect(); } catch (e) {} }, 150);
   }
 
   const STRETCH = 2.2;   // allunga le code dei suoni
@@ -51,6 +73,7 @@ const Sounds = (() => {
         osc.frequency.value = fr;
       }
       const end = t + dur * dm;
+      playEnd = Math.max(playEnd, end + 0.1);
       env.gain.setValueAtTime(0.0001, t);
       env.gain.linearRampToValueAtTime(g * gain, t + attack);
       if (sustain) env.gain.setValueAtTime(g * gain, Math.max(t + attack, end - rel));
@@ -85,55 +108,137 @@ const Sounds = (() => {
 
   const seq = (notes, t, step, o) => notes.forEach((n, i) => tone(hz(n), t + i * step * 1.6, o));
 
-  // --- brani con il timbro "Pad morbido": basso + accordi sostenuti + melodia ---
-  // ogni battuta: bass = nota MIDI del basso, v = voci dell'accordo, m = melodia [nota, battito, durata in battiti]
-  const PADP = [[1, 1, 1], [2, 0.2, 0.9]];
-  const BASSP = [[1, 1, 1], [2, 0.6, 1], [3, 0.25, 1]];
-  const PLUCK = [[1, 1, 1], [2, 0.3, 0.4]];
-  const padPiece = (beat0, bars) => (t) => {
-    const beat = beat0 * 0.6;   // brani più brevi
-    const bar = beat * 4;
-    bars.forEach((b, i) => {
-      const t0 = t + i * bar, last = i === bars.length - 1;
-      const len = last ? bar * 1.5 : bar + 0.8;
-      tone(hz(b.bass), t0, { sustain: true, dur: len, gain: 0.22, attack: 1.3, rel: 1, partials: BASSP });
-      b.v.forEach((n) => [-6, 6].forEach((dt) => tone(hz(n), t0, { sustain: true, dur: len, gain: 0.045, attack: 1.7, rel: 1.3, detune: dt, partials: PADP })));
-      if (!last) {
-        tone(hz(b.bass + 12), t0 + 2 * beat, { dur: 1.1, gain: 0.08, attack: 0.02, partials: PLUCK });
-        tone(hz(b.bass + 19), t0 + 3 * beat, { dur: 0.9, gain: 0.05, attack: 0.02, partials: PLUCK });
-      }
-      b.m.forEach(([n, bt, l]) => [-5, 5].forEach((dt) => tone(hz(n), t0 + bt * beat, { sustain: true, dur: l * beat + 1, gain: 0.07, attack: 0.65, rel: 1, detune: dt, partials: PADP })));
-    });
-  };
+  // --- melodie di pubblico dominio (autori morti da oltre 70 anni), suonate dal sintetizzatore ---
+  // notes: [nota MIDI, battito di inizio, durata in battiti, gain opzionale]
+  const melPiece = (beat, timbre, notes, gain = 0.2) => (t) => notes.forEach(([n, b, d, g]) =>
+    tone(hz(n), t + b * beat, { dur: Math.max(0.8, d * beat * 0.9), gain: g ?? gain, attack: 0.01, partials: timbre }));
 
-  const RHODES = [[1, 1, 1], [2, 0.28, 0.5], [3, 0.08, 0.3]];
-  const BELL = [[1, 1, 1], [2, 0.15, 0.6], [4, 0.28, 0.3]];
+  const FUR_ELISE = [
+    [76, 0, 1], [75, 1, 1], [76, 2, 1], [75, 3, 1], [76, 4, 1], [71, 5, 1], [74, 6, 1], [72, 7, 1], [69, 8, 2],
+    [45, 8, 1, 0.17], [52, 9, 1, 0.17], [57, 10, 1, 0.17],
+    [60, 11, 1], [64, 12, 1], [69, 13, 1], [71, 14, 2],
+    [40, 14, 1, 0.17], [52, 15, 1, 0.17], [56, 16, 1, 0.17],
+    [64, 17, 1], [68, 18, 1], [71, 19, 1], [72, 20, 2],
+    [45, 20, 1, 0.17], [52, 21, 1, 0.17], [57, 22, 1, 0.17],
+    [76, 22, 1], [75, 23, 1], [76, 24, 1], [75, 25, 1], [76, 26, 1], [71, 27, 1], [74, 28, 1], [72, 29, 1], [69, 30, 5],
+    [45, 22, 1, 0.17], [52, 23, 1, 0.17], [57, 24, 1, 0.17], [45, 25, 1, 0.17], [52, 26, 1, 0.17], [57, 27, 1, 0.17], [45, 28, 1, 0.17], [52, 29, 1, 0.17], [45, 30, 1.5, 0.17], [57, 31.5, 4, 0.17]];
 
-  // accordi di piano morbidi su basso sostenuto (ribattuti a metà battuta)
-  const chordPiece = (bar, bars) => (t) => {
-    bars.forEach((b, i) => {
-      const t0 = t + i * bar, last = i === bars.length - 1;
-      const len = last ? bar * 1.8 : bar + 0.6;
-      tone(hz(b.bass), t0, { sustain: true, dur: len, gain: 0.2, attack: 1.0, rel: 1, partials: BASSP });
-      b.v.forEach((n) => [-6, 6].forEach((dt) => tone(hz(n), t0, { sustain: true, dur: len, gain: 0.03, attack: 1.5, rel: 1.3, detune: dt, partials: PADP })));
-      const hit = (tt, g) => [b.bass + 12, ...b.v].forEach((n, k) => tone(hz(n), tt + k * 0.025, { dur: 1.3, gain: g, attack: 0.02, partials: PIANO }));
-      hit(t0, 0.085);
-      if (!last) hit(t0 + bar / 2, 0.05);
-    });
-  };
+  const ODE_TO_JOY = [
+    [64, 0, 1], [64, 1, 1], [65, 2, 1], [67, 3, 1], [67, 4, 1], [65, 5, 1], [64, 6, 1], [62, 7, 1],
+    [60, 8, 1], [60, 9, 1], [62, 10, 1], [64, 11, 1], [64, 12, 1.5], [62, 13.5, 0.5], [62, 14, 2.5],
+    [48, 0, 4, 0.17], [43, 4, 4, 0.17], [48, 8, 4, 0.17], [43, 12, 4, 0.17], [48, 16, 3, 0.17]];
 
-  // arpeggi + melodia rada: pat = indici delle voci (-1 = basso un'ottava sopra), mel = [nota, posizione 0..1 nella battuta, durata s]
-  const arpPiece = (bar, timbre, pat, bars) => (t) => {
-    bars.forEach((b, i) => {
-      const t0 = t + i * bar, last = i === bars.length - 1;
-      const len = last ? bar * 1.8 : bar + 0.6;
-      tone(hz(b.bass), t0, { sustain: true, dur: len, gain: 0.2, attack: 1.0, rel: 1, partials: BASSP });
-      b.v.forEach((n) => [-6, 6].forEach((dt) => tone(hz(n), t0, { sustain: true, dur: len, gain: 0.028, attack: 1.5, rel: 1.3, detune: dt, partials: PADP })));
-      const p = last ? pat.slice(0, 4) : pat, step = last ? bar / 3 : bar / pat.length;
-      p.forEach((x, k) => tone(hz(x < 0 ? b.bass + 12 : b.v[x]), t0 + k * step, { dur: 1.0, gain: x < 0 ? 0.09 : 0.075, attack: 0.012, partials: timbre }));
-      b.mel.forEach(([n, f, d]) => [-4, 4].forEach((dt) => tone(hz(n), t0 + f * bar, { sustain: true, dur: d, gain: 0.05, attack: 0.08, rel: d * 0.7, detune: dt, partials: BELL })));
-    });
-  };
+  const TWINKLE = [
+    [72, 0, 1], [72, 1, 1], [79, 2, 1], [79, 3, 1], [81, 4, 1], [81, 5, 1], [79, 6, 2],
+    [77, 8, 1], [77, 9, 1], [76, 10, 1], [76, 11, 1], [74, 12, 1], [74, 13, 1], [72, 14, 3],
+    [60, 0, 2, 0.2], [60, 4, 2, 0.2], [53, 8, 2, 0.2], [55, 12, 2, 0.2], [48, 14, 3, 0.2]];
+
+  const FIFTH = [
+    [67, 0, 0.5], [67, 0.5, 0.5], [67, 1, 0.5], [63, 1.5, 3], [55, 0, 0.5, 0.2], [55, 0.5, 0.5, 0.2], [55, 1, 0.5, 0.2], [51, 1.5, 3, 0.2],
+    [65, 5, 0.5], [65, 5.5, 0.5], [65, 6, 0.5], [62, 6.5, 4], [53, 5, 0.5, 0.2], [53, 5.5, 0.5, 0.2], [53, 6, 0.5, 0.2], [50, 6.5, 4, 0.2]];
+
+  // Gymnopédie n.1: accompagnamento Sol-maj7 / Re-maj7 e melodia
+  const GYMNO = [];
+  for (let i = 0; i < 6; i++) {
+    const b = i * 3, g = i % 2 === 0;
+    GYMNO.push([g ? 43 : 38, b, 3, 0.16]);
+    (g ? [59, 62, 66] : [57, 62, 66]).forEach((n, k) => GYMNO.push([n, b + 1, 2, 0.06 - k * 0.005]));
+  }
+  GYMNO.push([78, 3, 3, 0.17], [81, 6, 2, 0.17], [79, 8, 1, 0.17], [78, 9, 3, 0.17], [73, 12, 2, 0.17], [71, 14, 1, 0.17], [73, 15, 2, 0.17], [74, 17, 4, 0.18]);
+
+  // Canone di Pachelbel: basso a due battiti e prime otto note della melodia
+  const CANON = [];
+  [50, 45, 47, 42, 43, 38, 43, 45].forEach((n, i) => CANON.push([n, i * 2, 3.6, 0.16]));
+  // accordi prolungati (D A Bm F#m G D G A) sotto il basso
+  [[57, 62, 66], [57, 61, 64], [59, 62, 66], [57, 61, 66], [55, 59, 62], [57, 62, 66], [55, 59, 62], [57, 61, 64]]
+    .forEach((c, i) => c.forEach((n) => CANON.push([n, i * 2, 3.8, 0.07])));
+  [78, 76, 74, 73, 71, 69, 71, 73].forEach((n, i) => CANON.push([n, i * 2, 2, 0.17]));
+  CANON.push([74, 16, 5, 0.18], [50, 16, 5, 0.16], [57, 16, 5, 0.07], [62, 16, 5, 0.07], [66, 16, 5, 0.07]);
+
+  // Preludio in Do (Bach): 8 note per battuta, ripetute due volte
+  const PRELUDE = [];
+  [[48, 52, 55, 60, 64], [48, 50, 57, 62, 65], [47, 50, 55, 62, 65], [48, 52, 55, 60, 64]].forEach((c, bar) => {
+    const pat = [c[0], c[1], c[2], c[3], c[4], c[2], c[3], c[4]];
+    for (let r = 0; r < 2; r++) pat.forEach((n, i) => PRELUDE.push([n, bar * 16 + r * 8 + i, 2, 0.17]));
+  });
+  PRELUDE.push([36, 64, 6, 0.2], [48, 64, 6, 0.15], [64, 64, 6, 0.15], [67, 64, 6, 0.12]);
+
+  const seqNotes = (list) => { let t = 0; return list.map(([n, d]) => { const x = [n, t, d]; t += d; return x; }); };
+
+  const MORNING = seqNotes([[76, 1], [73, 1], [71, 1], [69, 1], [71, 1], [73, 1], [76, 1], [73, 1], [71, 1], [69, 1], [71, 1], [73, 1],
+    [78, 1], [75, 1], [73, 1], [71, 1], [73, 1], [75, 1], [78, 1], [75, 1], [73, 1], [71, 1], [73, 1], [75, 1], [76, 4]]);
+  const MINUET = seqNotes([[74, 1], [67, 0.5], [69, 0.5], [71, 0.5], [72, 0.5], [74, 1], [67, 1], [67, 1],
+    [76, 1], [72, 0.5], [74, 0.5], [76, 0.5], [78, 0.5], [79, 1], [67, 1], [67, 2]]);
+  const TURCA = seqNotes([[71, 1], [69, 1], [68, 1], [69, 1], [72, 4], [74, 1], [72, 1], [71, 1], [72, 1], [76, 4],
+    [77, 1], [76, 1], [75, 1], [76, 1], [83, 1], [81, 1], [80, 1], [81, 1], [83, 1], [81, 1], [80, 1], [81, 1], [84, 4]]);
+  const GREENSLEEVES = seqNotes([[69, 1], [72, 2], [74, 1], [76, 1.5], [77, 0.5], [76, 1], [74, 2], [71, 1], [67, 1.5], [69, 0.5], [71, 1], [72, 2], [69, 1],
+    [69, 1.5], [68, 0.5], [69, 1], [71, 2], [68, 1], [64, 3]]);
+  const BRAHMS = seqNotes([[64, 1], [64, 1], [67, 2], [64, 1], [64, 1], [67, 2], [64, 1], [67, 1], [72, 1], [71, 2], [69, 1], [69, 1], [67, 3]]);
+  const FRERE = seqNotes([[60, 1], [62, 1], [64, 1], [60, 1], [60, 1], [62, 1], [64, 1], [60, 1], [64, 1], [65, 1], [67, 2], [64, 1], [65, 1], [67, 2],
+    [67, 0.5], [69, 0.5], [67, 0.5], [65, 0.5], [64, 1], [60, 1], [67, 0.5], [69, 0.5], [67, 0.5], [65, 0.5], [64, 1], [60, 1], [60, 1], [55, 1], [60, 2]]);
+
+  // accompagnamento di basso (e quinta) per i brani che ne sono privi: [nota MIDI, inizio, durata]
+  const addBass = (piece, line, g = 0.17) => { line.forEach(([n, b, d]) => piece.push([n, b, d, g], [n + 7, b, d, g * 0.45])); return piece; };
+  addBass(PRELUDE, [[36, 0, 16], [36, 16, 16], [31, 32, 16], [36, 48, 16]], 0.18);
+  addBass(MORNING, [[40, 0, 4], [47, 4, 4], [40, 8, 4], [47, 12, 4], [54, 16, 4], [47, 20, 4], [40, 24, 6]]);
+  addBass(MINUET, [[43, 0, 3], [43, 3, 3], [48, 6, 3], [50, 9, 2], [43, 11, 3]]);
+  addBass(TURCA, [[45, 0, 4], [52, 4, 4], [45, 8, 4], [52, 12, 4], [40, 16, 4], [47, 20, 4], [40, 24, 4], [45, 28, 4]], 0.15);
+  addBass(GREENSLEEVES, [[45, 0, 3], [48, 3, 3], [43, 6, 3], [40, 9, 3], [45, 12, 3], [43, 15, 3], [45, 18, 3], [40, 21, 4]]);
+  addBass(BRAHMS, [[48, 0, 4], [48, 4, 4], [43, 8, 4], [41, 12, 2], [43, 14, 1], [48, 15, 3]]);
+  addBass(FRERE, [[48, 0, 4], [43, 4, 4], [48, 8, 4], [43, 12, 4], [48, 16, 4], [43, 20, 4], [48, 24, 4]]);
+
+  // --- brano personale: salvato in IndexedDB, solo in locale ---
+  const idbOp = (mode, fn) => new Promise((res, rej) => {
+    const r = indexedDB.open('timer-sounds', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('custom');
+    r.onerror = () => rej(r.error);
+    r.onsuccess = () => {
+      const tx = r.result.transaction('custom', mode);
+      const rq = fn(tx.objectStore('custom'));
+      tx.oncomplete = () => { r.result.close(); res(rq && rq.result); };
+      tx.onerror = () => rej(tx.error);
+    };
+  });
+  const decode = (data) => { init(); return ctx.decodeAudioData(data.slice(0)); };
+
+  async function loadCustom() {
+    try {
+      const rec = await idbOp('readonly', (st) => st.get('track'));
+      if (!rec) return null;
+      custom = { name: rec.name, buffer: await decode(rec.data) };
+      return custom.name;
+    } catch (e) { custom = null; return null; }
+  }
+  async function setCustom(file) {
+    if (file.size > CUSTOM_BYTES) throw new Error('size');
+    const data = await file.arrayBuffer();
+    let buffer;
+    try { buffer = await decode(data); } catch (e) { throw new Error('format'); }
+    const name = file.name.replace(/\.[^.]+$/, '');
+    await idbOp('readwrite', (st) => st.put({ name, data }, 'track'));
+    custom = { name, buffer };
+    return name;
+  }
+  async function clearCustom() {
+    stop();
+    custom = null;
+    try { await idbOp('readwrite', (st) => st.delete('track')); } catch (e) {}
+  }
+  // i primi 30 s, con dissolvenza finale
+  function playCustom(t) {
+    const src = ctx.createBufferSource();
+    const g = ctx.createGain();
+    const len = Math.min(CUSTOM_MAX, custom.buffer.duration), fade = Math.min(CUSTOM_FADE, len);
+    src.buffer = custom.buffer;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(1, t + 0.03);
+    g.gain.setValueAtTime(1, t + len - fade);
+    g.gain.linearRampToValueAtTime(0.0001, t + len);
+    src.connect(g);
+    g.connect(bus);
+    src.start(t, 0, len);
+    playEnd = Math.max(playEnd, t + len);
+  }
 
   const list = [
     { id: 'bowl', name: 'Campana tibetana', play: (t) => tone(hz(N.G4), t, { dur: 5, gain: 0.3, partials: BOWL }) },
@@ -145,7 +250,6 @@ const Sounds = (() => {
     { id: 'celesta', name: 'Celesta ninnananna', play: (t) => seq([N.G5, N.E5, N.C5], t, 0.4, { dur: 1.8, gain: 0.3, partials: CELESTA }) },
     { id: 'drops', name: "Gocce d'acqua", play: (t) => [0, 0.45, 0.8, 1.45].forEach((d, i) => tone(1000 + i * 120, t + d, { dur: 0.35, gain: 0.3, glide: { from: 1.8, time: 0.08 }, partials: [[1, 1, 1]] })) },
     { id: 'flute', name: 'Flauto', play: (t) => { tone(hz(N.A4), t, { dur: 2.2, gain: 0.22, attack: 0.18, vib: 0.004, partials: [[1, 1, 1], [2, 0.12, 1]] }); tone(hz(N.C5), t + 0.7, { dur: 2.4, gain: 0.2, attack: 0.18, vib: 0.004, partials: [[1, 1, 1], [2, 0.12, 1]] }); } },
-    { id: 'pad', name: 'Pad morbido', play: (t) => [N.C4, N.E4, N.G4, N.B4].forEach((n, i) => tone(hz(n), t, { dur: 4.5, gain: 0.13, attack: 1.0, detune: i % 2 ? 6 : -6, partials: [[1, 1, 1], [2, 0.2, 0.9]] })) },
     { id: 'vibes', name: 'Vibrafono', play: (t) => seq([N.F5, N.A5, N.C6], t, 0.33, { dur: 2.6, gain: 0.25, vib: 0.002, partials: VIBES }) },
     { id: 'glass', name: 'Cristallo', play: (t) => tone(hz(N.A5), t, { dur: 3.2, gain: 0.2, partials: GLASS }) },
     { id: 'chimes', name: 'Chime al vento', play: (t) => { const sc = [N.C6, N.D6, N.E6, N.G6, N.D5 + 12, N.A5]; let d = 0; for (let i = 0; i < 14; i++) { tone(hz(sc[Math.floor(Math.random() * sc.length)]), t + d, { dur: 2.2, gain: 0.14, partials: GLOCK }); d += 0.1 + Math.random() * 0.25; } } },
@@ -156,84 +260,58 @@ const Sounds = (() => {
     { id: 'bird', name: 'Uccellino', play: (t) => [0, 0.16, 0.32, 0.75, 0.91].forEach((d, i) => tone(2300 + (i % 3) * 300, t + d, { dur: 0.13, gain: 0.14, attack: 0.01, glide: { from: 0.8, time: 0.08 }, partials: [[1, 1, 1]] })) },
     { id: 'dawn', name: 'Alba', play: (t) => { tone(hz(N.D5), t, { dur: 3, gain: 0.22, attack: 0.08, partials: [[1, 1, 1], [2, 0.18, 0.8]] }); tone(hz(N.A5), t + 0.5, { dur: 3.4, gain: 0.2, attack: 0.08, partials: [[1, 1, 1], [2, 0.18, 0.8]] }); } },
     { id: 'wood', name: 'Legno zen', play: (t) => [0, 0.55].forEach((d, i) => tone(hz(i ? 55 : 60) * 2, t + d, { dur: 0.7, gain: 0.4, attack: 0.002, partials: [[1, 1, 1], [2.4, 0.3, 0.25], [4.1, 0.12, 0.12]] })) },
-    { id: 'padA', name: 'Pad · Risveglio', play: padPiece(0.8, [
-      { bass: 36, v: [55, 59, 64], m: [[76, 0, 2], [79, 2, 1], [81, 3, 1]] },
-      { bass: 33, v: [55, 60, 64], m: [[79, 0, 1.5], [76, 1.5, 0.5], [72, 2, 2]] },
-      { bass: 41, v: [57, 60, 64], m: [[72, 0, 1], [77, 1, 1.5], [76, 2.5, 0.5], [74, 3, 1]] },
-      { bass: 43, v: [55, 60, 62], m: [[74, 0, 2], [72, 2, 1], [71, 3, 1]] },
-      { bass: 36, v: [55, 60, 64], m: [[76, 0, 4]] }]) },
-    { id: 'padB', name: 'Pad · Lago', play: padPiece(0.95, [
-      { bass: 33, v: [55, 60, 64], m: [[72, 1, 2], [76, 3, 1]] },
-      { bass: 41, v: [57, 60, 64], m: [[77, 0, 3], [76, 3, 1]] },
-      { bass: 36, v: [55, 59, 64], m: [[79, 0.5, 1.5], [76, 2, 1], [72, 3, 1]] },
-      { bass: 40, v: [55, 59, 62], m: [[71, 0, 2], [74, 2, 1], [76, 3, 1]] },
-      { bass: 33, v: [57, 60, 64], m: [[81, 0, 1.5], [76, 1.5, 2.5]] }]) },
-    { id: 'padC', name: 'Pad · Nuvole', play: padPiece(0.85, [
-      { bass: 41, v: [57, 60, 64], m: [[81, 0, 1], [84, 1, 2], [81, 3, 1]] },
-      { bass: 43, v: [59, 62, 64], m: [[79, 0, 2], [83, 2, 1], [81, 3, 1]] },
-      { bass: 40, v: [55, 59, 62], m: [[79, 0, 1.5], [74, 1.5, 0.5], [76, 2, 2]] },
-      { bass: 38, v: [57, 60, 64], m: [[77, 0, 2], [76, 2, 1], [74, 3, 1]] },
-      { bass: 41, v: [57, 60, 65], m: [[72, 0, 4]] }]) },
-    { id: 'padD', name: 'Pad · Radura', play: padPiece(0.75, [
-      { bass: 43, v: [59, 62, 67], m: [[74, 0, 1], [79, 1, 2], [78, 3, 1]] },
-      { bass: 42, v: [57, 62, 66], m: [[81, 0, 2], [79, 2, 1], [78, 3, 1]] },
-      { bass: 40, v: [59, 62, 67], m: [[79, 0, 1.5], [76, 1.5, 1.5], [74, 3, 1]] },
-      { bass: 36, v: [59, 64, 67], m: [[72, 0, 1], [76, 1, 1], [79, 2, 2]] },
-      { bass: 38, v: [57, 62, 67], m: [[81, 0, 2], [79, 2, 1], [78, 3, 1]] },
-      { bass: 43, v: [59, 62, 67], m: [[79, 0, 4]] }]) },
-    { id: 'padE', name: 'Pad · Sera', play: padPiece(1.0, [
-      { bass: 38, v: [57, 60, 64], m: [[77, 0, 2], [76, 2, 1], [74, 3, 1]] },
-      { bass: 34, v: [57, 62, 65], m: [[74, 0, 1.5], [77, 1.5, 0.5], [81, 2, 2]] },
-      { bass: 43, v: [58, 62, 65], m: [[79, 0, 2], [77, 2, 1], [74, 3, 1]] },
-      { bass: 33, v: [55, 62, 64], m: [[76, 0, 1], [79, 1, 1], [81, 2, 2]] },
-      { bass: 38, v: [57, 60, 65], m: [[77, 0, 4]] }]) },
-    { id: 'padF', name: 'Pad · Bianche (Fm D♭ A♭ E♭)', play: chordPiece(2.4, [
-      { bass: 41, v: [56, 60, 65] },
-      { bass: 37, v: [56, 61, 65] },
-      { bass: 44, v: [60, 63, 68] },
-      { bass: 39, v: [58, 63, 67] },
-      { bass: 41, v: [56, 60, 65] }]) },
-    { id: 'pnoA', name: 'Piano · Brezza', play: arpPiece(2.2, PIANO, [-1, 0, 2, 3, 2, 1, 3, 2], [
-      { bass: 38, v: [57, 62, 64, 66], mel: [[74, 0, 1.6], [76, 0.5, 1.2]] },
-      { bass: 47, v: [59, 62, 66, 69], mel: [[78, 0.25, 1.4]] },
-      { bass: 43, v: [59, 62, 66, 67], mel: [[79, 0, 1.0], [78, 0.5, 1.2]] },
-      { bass: 45, v: [57, 62, 64, 66], mel: [[76, 0, 1.0], [73, 0.55, 1.6]] },
-      { bass: 38, v: [57, 62, 66, 69], mel: [[74, 0, 3]] }]) },
-    { id: 'pnoB', name: 'Piano · Pioggia', play: arpPiece(2.2, RHODES, [-1, 1, 2, 1, 3, 2, 1, 2], [
-      { bass: 45, v: [55, 60, 64, 71], mel: [[76, 0.1, 1.8]] },
-      { bass: 41, v: [57, 60, 64, 69], mel: [[72, 0, 1.0], [77, 0.5, 1.4]] },
-      { bass: 40, v: [55, 59, 64, 67], mel: [[76, 0, 1.0], [79, 0.5, 1.4]] },
-      { bass: 43, v: [59, 62, 64, 69], mel: [[74, 0, 1.0], [71, 0.6, 1.4]] },
-      { bass: 45, v: [57, 60, 64, 69], mel: [[69, 0, 3]] }]) },
-    { id: 'pnoC', name: 'Piano · Alba chiara', play: arpPiece(2.2, PIANO, [-1, 0, 1, 2, 3, 2, 3, 1], [
-      { bass: 36, v: [55, 59, 62, 64], mel: [[79, 0, 1.5], [83, 0.5, 1.3]] },
-      { bass: 40, v: [55, 59, 62, 66], mel: [[81, 0.2, 1.6]] },
-      { bass: 41, v: [57, 60, 64, 71], mel: [[84, 0, 1.4], [81, 0.55, 1.4]] },
-      { bass: 43, v: [57, 62, 64, 67], mel: [[79, 0, 1.0], [74, 0.5, 1.5]] },
-      { bass: 36, v: [55, 60, 64, 67], mel: [[79, 0, 3.2]] }]) },
-    { id: 'pnoD', name: 'Piano · Sera blu', play: arpPiece(2.2, RHODES, [-1, 1, 3, 2, 1, 3, 2, 1], [
-      { bass: 36, v: [58, 63, 67, 74], mel: [[75, 0, 1.5], [74, 0.55, 1.2]] },
-      { bass: 44, v: [55, 60, 63, 67], mel: [[72, 0.2, 1.6]] },
-      { bass: 41, v: [56, 60, 63, 67], mel: [[72, 0, 1.0], [68, 0.5, 1.5]] },
-      { bass: 43, v: [60, 62, 65, 67], mel: [[70, 0, 1.2], [67, 0.55, 1.4]] },
-      { bass: 36, v: [55, 60, 63, 67], mel: [[75, 0, 3.2]] }]) },
-    { id: 'pnoE', name: 'Piano · Sentiero', play: arpPiece(2.2, PIANO, [-1, 0, 1, 2, 3, 1, 2, 3], [
-      { bass: 43, v: [59, 62, 67, 69], mel: [[74, 0, 1.2], [79, 0.5, 1.4]] },
-      { bass: 42, v: [57, 62, 66, 69], mel: [[78, 0.25, 1.6]] },
-      { bass: 40, v: [59, 62, 67, 71], mel: [[76, 0, 1.2], [74, 0.55, 1.3]] },
-      { bass: 36, v: [55, 62, 64, 67], mel: [[72, 0, 1.0], [79, 0.5, 1.6]] },
-      { bass: 43, v: [59, 62, 67, 74], mel: [[74, 0, 3.2]] }]) },
+    { id: 'clElise', name: 'Per Elisa (Beethoven)', play: melPiece(0.17, PIANO, FUR_ELISE) },
+    { id: 'clOde', name: 'Inno alla gioia (Beethoven)', play: melPiece(0.3, VIBES, ODE_TO_JOY, 0.22) },
+    { id: 'clGymno', name: 'Gymnopédie n.1 (Satie)', play: melPiece(0.4, PIANO, GYMNO) },
+    { id: 'clCanon', name: 'Canone (Pachelbel)', play: melPiece(0.6, PIANO, CANON) },
+    { id: 'clTwinkle', name: 'Ah! vous dirai-je, maman (Mozart)', play: melPiece(0.33, CELESTA, TWINKLE, 0.26) },
+    { id: 'clFifth', name: 'Quinta sinfonia (Beethoven)', play: melPiece(0.5, PIANO, FIFTH, 0.3) },
+    { id: 'clPrelude', name: 'Preludio in Do (Bach)', play: melPiece(0.17, PIANO, PRELUDE) },
+    { id: 'clMorning', name: 'Il mattino (Grieg)', play: melPiece(0.4, [[1, 1, 1], [2, 0.12, 1]], MORNING, 0.24) },
+    { id: 'clMinuet', name: 'Minuetto in Sol (Bach)', play: melPiece(0.3, HARP, MINUET, 0.24) },
+    { id: 'clTurca', name: 'Marcia turca (Mozart)', play: melPiece(0.14, PIANO, TURCA, 0.22) },
+    { id: 'clGreen', name: 'Greensleeves', play: melPiece(0.36, CELESTA, GREENSLEEVES, 0.26) },
+    { id: 'clBrahms', name: 'Ninna nanna (Brahms)', play: melPiece(0.38, CELESTA, BRAHMS, 0.26) },
+    { id: 'clFrere', name: 'Fra Martino', play: melPiece(0.3, VIBES, FRERE, 0.22) },
   ];
 
+  // sezioni del menu, nell'ordine di visualizzazione
+  const GROUPS = ['classic', 'bells', 'instr', 'nature'];
+  const GROUP_OF = {};
+  const put = (g, ids) => ids.forEach((id) => { GROUP_OF[id] = g; });
+  put('bells', ['bowl', 'deep', 'carillon', 'glass', 'chimes', 'gong', 'dingdong']);
+  put('instr', ['marimba', 'kalimba', 'harp', 'celesta', 'flute', 'vibes', 'piano']);
+  put('nature', ['drops', 'bubble', 'bird', 'dawn', 'wood']);
+  put('classic', ['clElise', 'clOde', 'clGymno', 'clCanon', 'clTwinkle', 'clFifth', 'clPrelude', 'clMorning', 'clMinuet', 'clTurca', 'clGreen', 'clBrahms', 'clFrere']);
+
   return {
-    list: list.map(({ id, name }) => ({ id, name })),
+    get groups() { return custom ? ['mine', ...GROUPS] : GROUPS; },
+    loadCustom, setCustom, clearCustom,
+    get hasCustom() { return !!custom; },
+    stop,
+    get playing() { return !!current; },
+    set onState(fn) { onState = fn; },
+    get list() {
+      const l = list.map(({ id, name }) => ({ id, name, group: GROUP_OF[id] }));
+      return custom ? [{ id: 'custom', name: custom.name, group: 'mine' }, ...l] : l;
+    },
     play(id, volume = 0.7) {
       init();
+      stop();
+      const isCustom = id === 'custom' && custom;
+      bus = current = newBus(isCustom);
       master.gain.value = Math.max(0, Math.min(1, volume));
-      const s = list.find((x) => x.id === id) || list[0];
-      const t0 = ctx.currentTime + 0.03;
-      s.play(t0);
-      if (REPEAT.has(s.id)) s.play(t0 + 3.2);
+      playEnd = 0;
+      if (isCustom) playCustom(ctx.currentTime + 0.03);
+      else {
+        const s = list.find((x) => x.id === id) || list[0];
+        const t0 = ctx.currentTime + 0.03;
+        s.play(t0);
+        if (REPEAT.has(s.id)) s.play(t0 + 3.2);
+      }
+      notify(true);
+      const mine = current;
+      endTimer = setTimeout(() => { if (current === mine) { current = null; notify(false); } }, Math.max(0, (playEnd - ctx.currentTime) * 1000));
     },
   };
 })();

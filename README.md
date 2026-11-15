@@ -8,7 +8,7 @@ A minimalist analog timer for Windows that keeps you from sitting too long. One-
 
 - **Analog dial with rings.** One ring per hour; the planned duration is marked, the overtime turns warm-colored.
 - **Elapsed or remaining time.** Click the number to switch between count-up and countdown.
-- **Repeating alerts.** Choose the sound (31 synthesized sounds, no audio files), volume, number of repeats and interval.
+- **Repeating alerts.** Choose the sound (32 synthesized sounds, including public-domain classical melodies, no audio files, plus one optional sound of your own: first 30 s with fade-out, stored locally), volume, number of repeats and interval.
 - **Activity summary.** Active time and breaks for today and the last 7 days. Breaks over 3 hours count as absence, not as a break.
 - **Taskbar progress** and window flashing when time is up.
 - **Compact window**, resizable, optional always-on-top, remembers its position.
@@ -51,9 +51,11 @@ npm run build    # release build + NSIS installer in src-tauri/target/release/bu
 
 ## About this project
 
-Conceived, designed and directed by Gabriele Mele; developed with [Claude Code](https://claude.com/claude-code) (AI-assisted). The product decisions, testing and release are mine; most of the code was written by the assistant under my direction.
+Conceived, designed and directed by Gabriele Melendugno; developed with [Claude Code](https://claude.com/claude-code) (AI-assisted). The product decisions, testing and release are mine; most of the code was written by the assistant under my direction.
 
 Made by [nextquo.com](https://nextquo.com), which builds custom websites and apps.
+
+Timer is free and has no ads. If you like it, you can [buy me a coffee](https://ko-fi.com/gabrielem) (completely optional).
 
 ## License
 
