@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Timer</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-status="idle">
+
+<div id="bar">
+  <button class="ib" id="btnSum" data-i18n-title="title_sum">
+    <svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+  </button>
+  <button class="ib" id="btnSet" data-i18n-title="title_set">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+  <button class="ib" id="btnAbout" data-i18n-title="title_about">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.01"/></svg>
+  </button>
+  <div id="today"></div>
+</div>
+
+<div id="stage">
+  <svg id="dial" viewBox="-104 -104 208 208" preserveAspectRatio="xMidYMid meet">
+    <g id="ticks"></g>
+    <g id="rings"></g>
+  </svg>
+  <a id="brand" class="ext" href="#" data-i18n-title="brand_title">nextquo.com</a>
+  <div id="center">
+    <div id="tTop" class="lbl"></div>
+    <div id="tMain" data-i18n-title="title_mode"></div>
+    <div id="tBot" class="lbl"></div>
+    <div id="durRow">
+      <div id="chips"></div>
+      <span id="durEdit" hidden>
+        <button type="button" class="chip step" id="durDec" aria-label="-1 min" title="-1 min">−</button>
+        <input id="durIn" type="number" min="1" max="600" step="1" data-i18n-title="title_dur">
+        <span class="unit">min</span>
+        <button type="button" class="chip step" id="durInc" aria-label="+1 min" title="+1 min">+</button>
+      </span>
+    </div>
+    <div id="ctl">
+  <button id="btnStop" class="rb small" data-i18n-title="title_stop">
+    <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+  </button>
+  <button id="btnGo" class="rb" data-i18n-title="title_go">
+    <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>
+    <svg class="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5.5" width="3.8" height="13" rx="1"/><rect x="13.7" y="5.5" width="3.8" height="13" rx="1"/></svg>
+  </button>
+    </div>
+  </div>
+</div>
+
+
+<section class="panel" id="pSet">
+  <h2 data-i18n="set_h"></h2>
+  <label><span data-i18n="snd"></span>
+    <span class="row">
+      <select id="sSound"></select>
+      <button class="mini" id="sPlay" data-i18n-title="play"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+    </span>
+  </label>
+  <label><span data-i18n="vol"></span> <input id="sVol" type="range" min="0" max="1" step="0.05"></label>
+  <label><span data-i18n="reps"></span> <input id="sReps" type="number" min="1" max="99" step="1"></label>
+  <label><span data-i18n="every"></span> <input id="sEvery" type="number" min="0.5" max="60" step="0.5"></label>
+  <label><span data-i18n="presets"></span> <input id="sPresets" type="text" placeholder="25, 55"></label>
+  <label class="chk"><input id="sTop" type="checkbox"> <span data-i18n="ontop"></span></label>
+  <label><span data-i18n="mode"></span> <select id="sMode"></select></label>
+  <label><span data-i18n="theme"></span> <select id="sTheme"></select></label>
+  <label><span data-i18n="accent"></span> <span class="swatches" id="sAccent" role="radiogroup"></span></label>
+  <label><span data-i18n="lang"></span> <select id="sLang"></select></label>
+  <label><span data-i18n="keep"></span> <select id="sKeep"></select></label>
+  <p class="hint" data-i18n="hint"></p>
+  <button class="danger" id="sClear" data-i18n="clear"></button>
+</section>
+
+<section class="panel" id="pAbout">
+  <h2 data-i18n="about_h"></h2>
+  <p class="about-name">Timer <small id="ver"></small></p>
+  <p class="hint" data-i18n="about_desc"></p>
+  <p class="about"><span data-i18n="about_by"></span> <a class="ext" href="#">nextquo.com</a></p>
+  <p class="about"><span data-i18n="cta"></span> <a class="ext" href="#">nextquo.com</a></p>
+</section>
+
+<section class="panel" id="pSum">
+  <h2 data-i18n="sum_h"></h2>
+  <div id="sumBody"></div>
+</section>
+
+<script src="i18n.js"></script>
+<script src="sounds.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
