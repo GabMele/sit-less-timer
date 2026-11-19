@@ -1,4 +1,4 @@
-// Ponte verso Tauri: espone window.native (stessa interfaccia di quando l'app era Electron)
+// Bridge to Tauri: exposes window.native (same interface as when the app was Electron)
 (() => {
   const T = window.__TAURI__;
   if (!T || window.native) return;
@@ -23,7 +23,7 @@
     },
   };
 
-  // pulsanti della finestra personalizzata
+  // custom window buttons
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('wc').hidden = false;
     document.getElementById('wMin').addEventListener('click', () => w.minimize());

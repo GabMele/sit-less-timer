@@ -1,4 +1,4 @@
-// Traduzioni: en, fr, es, it
+// Translations: en, fr, es, it
 const I18N = (() => {
   const LANGS = { en: 'English', fr: 'Français', es: 'Español', it: 'Italiano' };
   const LOCALE = { en: 'en-GB', fr: 'fr-FR', es: 'es-ES', it: 'it-IT' };
@@ -90,7 +90,7 @@ const I18N = (() => {
     },
   };
 
-  // nomi dei suoni (it = nome predefinito in sounds.js)
+  // sound names (it = default name in sounds.js)
   const NAMES = {
     en: { bowl: 'Tibetan bowl', deep: 'Deep bowl', marimba: 'Marimba', kalimba: 'Kalimba', harp: 'Harp', carillon: 'Carillon', celesta: 'Celesta lullaby', drops: 'Water drops', flute: 'Flute', vibes: 'Vibraphone', glass: 'Crystal', chimes: 'Wind chimes', gong: 'Soft gong', dingdong: 'Ding-dong', piano: 'Gentle piano', bubble: 'Bubble', bird: 'Little bird', dawn: 'Dawn', wood: 'Zen wood',
       clElise: 'Für Elise (Beethoven)', clOde: 'Ode to Joy (Beethoven)', clGymno: 'Gymnopédie No. 1 (Satie)', clCanon: 'Canon (Pachelbel)', clTwinkle: 'Twinkle Twinkle (Mozart)', clFifth: 'Fifth Symphony (Beethoven)' },
@@ -103,7 +103,7 @@ const I18N = (() => {
       clPrelude: 'Preludio en do (Bach)', clMorning: 'La mañana (Grieg)', clMinuet: 'Minueto en sol (Bach)', clTurca: 'Marcha turca (Mozart)', clGreen: 'Greensleeves', clBrahms: 'Nana (Brahms)', clFrere: 'Fray Santiago',
   };
 
-  // nomi delle sezioni del menu suoni
+  // sound menu section names
   const GROUPS = {
     it: { mine: 'Personale', bells: 'Campane e gong', instr: 'Strumenti', nature: 'Natura', classic: 'Classici' },
     en: { mine: 'Yours', bells: 'Bells & gongs', instr: 'Instruments', nature: 'Nature', classic: 'Classical' },

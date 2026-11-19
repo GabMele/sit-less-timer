@@ -5,15 +5,15 @@
   const native = window.native || { openExternal(u) { window.open(u, '_blank', 'noopener'); }, setOnTop() {}, getOnTop: async () => false, attention() {}, progress() {}, setTheme() {}, version: async () => '' };
   native.version().then((v) => { if (v) $('#ver').textContent = 'v' + v; }).catch(() => {});
 
-  /* ---------- persistenza ---------- */
+  /* ---------- persistence ---------- */
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
   const DEF = { duration: 25, presets: [25, 55], sound: 'bowl', volume: 0.7, reps: 10, every: 3, onTop: false, keep: 30, theme: 'system', accent: 'teal', mode: 'up' };
   const S = { ...DEF, ...store.get('timer.settings', {}) };
-  if (S.sound !== 'custom' && !Sounds.list.some((x) => x.id === S.sound)) S.sound = DEF.sound;   // suono rimosso da una versione precedente
-  // migrazione: i vecchi preset di default (27, 52) diventano i nuovi (25, 55)
+  if (S.sound !== 'custom' && !Sounds.list.some((x) => x.id === S.sound)) S.sound = DEF.sound;   // sound removed in a previous version
+  // migration: the old default presets (27, 52) become the new ones (25, 55)
   if (Array.isArray(S.presets) && S.presets.join() === '27,52') S.presets = DEF.presets;
   if (!I18N.LANGS[S.lang]) S.lang = I18N.detect();
   I18N.setLang(S.lang);
@@ -21,8 +21,8 @@
   const saveS = () => store.set('timer.settings', S);
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-  /* ---------- tema e colore d'accento ---------- */
-  // [scuro, chiaro]: nel tema chiaro servono toni più scuri per il contrasto
+  /* ---------- theme and accent color ---------- */
+  // [dark, light]: the light theme needs darker tones for contrast
   const ACCENTS = {
     teal: ['#3fd0b8', '#0f8a76'], blue: ['#6ca0f0', '#2f5fb8'], violet: ['#a78bfa', '#6d4fd0'],
     pink: ['#f27aa8', '#c2336f'], orange: ['#f2a65a', '#b8590a'], green: ['#6fd16f', '#2a8a3a'],
@@ -47,11 +47,11 @@
   }
   darkMQ.addEventListener('change', applyTheme);
 
-  /* ---------- stato timer ---------- */
+  /* ---------- timer state ---------- */
   let status = 'idle';          // idle | running | paused
-  let acc = 0;                  // ms accumulati prima dell'ultimo avvio
+  let acc = 0;                  // ms accumulated before the last start
   let startedAt = 0;
-  let alertIdx = 0;             // quanti avvisi già suonati
+  let alertIdx = 0;             // how many alerts have already played
 
   const elapsedMs = () => acc + (status === 'running' ? Date.now() - startedAt : 0);
   const targetMs = () => S.duration * 60000;
@@ -87,8 +87,8 @@
     tick();
   }
 
-  /* ---------- registro attività / pause ---------- */
-  const MAX_PAUSE = 3 * 3600e3;   // pause oltre 3h = assenza, non contate
+  /* ---------- activity / break log ---------- */
+  const MAX_PAUSE = 3 * 3600e3;   // breaks over 3h count as absence, not as a break
   let L = store.get('timer.log', { segs: [], open: null, hb: 0 });
   function closeOpen(end) {
     const o = L.open; L.open = null;
@@ -146,7 +146,7 @@
   }
   const hhmm = (t) => new Date(t).toLocaleTimeString(I18N.locale(), { hour: '2-digit', minute: '2-digit' });
 
-  /* ---------- quadrante ---------- */
+  /* ---------- dial ---------- */
   const f = (n) => Math.round(n * 100) / 100;
   const polar = (r, deg) => { const a = deg * Math.PI / 180; return [f(r * Math.sin(a)), f(-r * Math.cos(a))]; };
   function arcPath(r, a0, a1) {
@@ -158,7 +158,7 @@
     return `M${x0} ${y0}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}`;
   }
 
-  // tacche fisse
+  // fixed tick marks
   (() => {
     let h = '';
     for (let i = 0; i < 60; i++) {
@@ -171,10 +171,10 @@
 
   const ringsG = $('#rings');
   let lastRings = '';
-  // raggio esterno degli anelli = 86, il centro resta libero per il testo
+  // outer ring radius = 86, the center stays free for the text
   function drawRings(el) {
     const T = S.duration, Tms = T * 60000, down = S.mode === 'down', over = el >= Tms;
-    // in countdown il quadrante parte pieno (durata impostata) e si svuota; oltre il tempo riparte da 0 in colore caldo
+    // in countdown mode the dial starts full (set duration) and empties; past the time it restarts from 0 in the warm color
     const vMs = down ? (over ? el - Tms : Tms - el) : el;
     const m = vMs / 60000;
     const n = Math.max(Math.floor((down && !over ? 0 : m) / 60), Math.ceil(T / 60) - 1) + 1;
@@ -192,11 +192,11 @@
       out += `<circle class="track" r="${r}" stroke-width="${f(thin)}"/>` + seg(0, T, 'plan') +
         (down ? (over ? seg(0, m, 'over') : seg(0, m, 'done')) : seg(0, Math.min(m, T), 'done') + seg(T, m, 'over'));
     }
-    // segno del traguardo
+    // goal marker
     const k = Math.ceil(T / 60) - 1, rk = rad(k), ang = (T - k * 60) * 6;
     const [mx0, my0] = polar(rk + th / 2 + 1.5, ang), [mx1, my1] = polar(rk - th / 2 - 1.5, ang);
     out += `<line class="mark" x1="${mx0}" y1="${my0}" x2="${mx1}" y2="${my1}"/>`;
-    // lancetta (un giro all'ora) e puntino dei secondi (un giro al minuto)
+    // hand (one turn per hour) and seconds dot (one turn per minute)
     const ha = (m % 60) * 6;
     const [hx0, hy0] = polar(42, ha), [hx1, hy1] = polar(90, ha);
     out += `<line class="hand" x1="${hx0}" y1="${hy0}" x2="${hx1}" y2="${hy1}"/>`;
@@ -231,7 +231,7 @@
       : over ? t('over', fmtClock(el - T), `${alertIdx}/${S.reps}`) : t('left', fmtClock(Math.ceil((T - el) / 1000) * 1000));
     document.title = status === 'idle' ? 'Sit-less Timer' : `${txt} – Sit-less Timer`;
 
-    // barra delle applicazioni
+    // taskbar
     let key;
     if (status === 'idle') key = 'off';
     else if (over) key = 'over';
@@ -244,7 +244,7 @@
     }
   }
 
-  /* ---------- ciclo ---------- */
+  /* ---------- tick loop ---------- */
   function fire() {
     Sounds.play(S.sound, S.volume);
     native.attention();
@@ -255,7 +255,7 @@
   function tick() {
     const el = elapsedMs();
     if (status === 'running') {
-      // dopo una sospensione del PC possono essere scaduti più avvisi: ne suona uno solo
+      // after the PC sleeps several alerts may have expired: play only one
       let due = 0;
       while (alertIdx < S.reps && el >= targetMs() + alertIdx * everyMs()) {
         alertIdx++;
@@ -268,14 +268,14 @@
   }
   setInterval(tick, 200);
 
-  /* ---------- barra superiore ---------- */
+  /* ---------- top bar ---------- */
   function refreshToday() {
     const st = stats(0);
     $('#today').textContent = st.a + st.p === 0 ? t('today_none') : t('today_fmt', fmtDur(st.a), fmtDur(st.p));
   }
   setInterval(refreshToday, 10000);
 
-  /* ---------- durata ---------- */
+  /* ---------- duration ---------- */
   const chipsEl = $('#chips'), durIn = $('#durIn'), durEdit = $('#durEdit');
   let otherBtn, prevDur = S.duration;
   function buildChips() {
@@ -286,7 +286,7 @@
       b.addEventListener('click', () => setDuration(p));
       chipsEl.appendChild(b);
     }
-    // ultimo chip: durata personalizzata (mostra il valore se non è un preset)
+    // last chip: custom duration (shows the value if it is not a preset)
     otherBtn = document.createElement('button');
     otherBtn.className = 'chip other'; otherBtn.title = t('title_other');
     otherBtn.addEventListener('click', openEdit);
@@ -315,7 +315,7 @@
     S.duration = clamp(v, 1, 600);
     saveS(); syncAlertIdx(); markChips(); lastProg = ''; tick();
   }
-  // − / +: mousedown non deve togliere il focus al campo, altrimenti si chiude la modifica
+  // − / +: mousedown must not take focus from the field, otherwise editing closes
   for (const [id, d] of [['#durDec', -1], ['#durInc', 1]]) {
     const b = $(id);
     b.addEventListener('mousedown', (e) => e.preventDefault());
@@ -328,7 +328,7 @@
     else if (e.key === 'Escape') { setDuration(prevDur); durIn.blur(); }
   });
 
-  /* ---------- pulsanti ---------- */
+  /* ---------- buttons ---------- */
   $('#btnGo').addEventListener('click', () => (status === 'running' ? pause() : start()));
   $('#btnStop').addEventListener('click', stop);
   window.addEventListener('keydown', (e) => {
@@ -340,7 +340,7 @@
     }
   });
 
-  /* ---------- pannelli ---------- */
+  /* ---------- panels ---------- */
   const pSet = $('#pSet'), pSum = $('#pSum'), pAbout = $('#pAbout');
   function closePanels() {
     pSet.classList.remove('open'); pSum.classList.remove('open'); pAbout.classList.remove('open');
@@ -355,7 +355,7 @@
   $('#btnSum').addEventListener('click', () => toggle(pSum, $('#btnSum')));
   $('#btnAbout').addEventListener('click', () => toggle(pAbout, $('#btnAbout')));
 
-  // impostazioni
+  // settings
   const sSound = $('#sSound'), sLang = $('#sLang');
   function buildSoundOptions() {
     sSound.innerHTML = '';
@@ -487,7 +487,7 @@
   });
   $('#sTop').addEventListener('change', () => { S.onTop = $('#sTop').checked; saveS(); native.setOnTop(S.onTop); });
 
-  // riepilogo
+  // summary
   const DAYF = { weekday: 'short', day: 'numeric', month: 'short' };
   function renderSummary() {
     const st = stats(0);
@@ -531,7 +531,7 @@
     native.openExternal(a.dataset.url || 'https://nextquo.com/?utm_source=timer-app&utm_medium=app');
   }));
 
-  /* ---------- avvio ---------- */
+  /* ---------- startup ---------- */
   I18N.apply();
   applyTheme();
   buildChips();

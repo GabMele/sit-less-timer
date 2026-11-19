@@ -37,7 +37,7 @@ The first version was built with Electron (tag [`electron-v1.0.0`](../../release
 Design notes:
 - Time is computed from `Date.now()` rather than counting ticks, so it stays correct after sleep or throttling. After a long sleep only one alert is played, not all the missed ones.
 - The window is frameless with a custom title bar; the destructive "close" button is small and separated from the frequent controls.
-- Security: strict CSP, no remote content, external links limited to one allow-listed domain, minimal Tauri capabilities.
+- Security: strict CSP, no remote content, external links limited to an allow-list (nextquo.com, ko-fi.com), minimal Tauri capabilities.
 
 ## Develop
 

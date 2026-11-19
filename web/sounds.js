@@ -1,7 +1,7 @@
-// suoni dolci e melodie classiche di pubblico dominio sintetizzati con WebAudio (nessun file audio necessario)
+// gentle sounds and public-domain classical melodies synthesized with WebAudio (no audio files needed)
 const Sounds = (() => {
   let ctx, master, bus, conv, current;
-  let custom = null;   // brano dell'utente: { name, buffer }
+  let custom = null;   // the user's own sound: { name, buffer }
   const CUSTOM_MAX = 30, CUSTOM_FADE = 3, CUSTOM_BYTES = 10 * 1024 * 1024;
 
   function init() {
@@ -12,7 +12,7 @@ const Sounds = (() => {
     master.connect(comp);
     comp.connect(ctx.destination);
 
-    // riverbero morbido generato da rumore decrescente
+    // soft reverb generated from decaying noise
     const len = Math.floor(ctx.sampleRate * 2.4);
     const buf = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let c = 0; c < 2; c++) {
@@ -34,8 +34,8 @@ const Sounds = (() => {
     return b;
   }
 
-  // ferma il suono in corso con una dissolvenza rapida
-  let playEnd = 0, endTimer = null, onState = null;   // fine prevista del suono in corso
+  // stop the current sound with a quick fade-out
+  let playEnd = 0, endTimer = null, onState = null;   // expected end of the current sound
   const notify = (p) => { if (onState) onState(p); };
   function stop() {
     clearTimeout(endTimer);
@@ -50,12 +50,12 @@ const Sounds = (() => {
     setTimeout(() => { try { b.disconnect(); } catch (e) {} }, 150);
   }
 
-  const STRETCH = 2.2;   // allunga le code dei suoni
+  const STRETCH = 2.2;   // lengthens the sound tails
   const REPEAT = new Set(['drops', 'bubble', 'bird', 'wood', 'marimba', 'kalimba', 'celesta', 'piano', 'harp']);
   const hz = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
   const N = { C4: 60, D4: 62, E4: 64, F4: 65, G4: 67, A4: 69, B4: 71, C5: 72, D5: 74, E5: 76, F5: 77, G5: 79, A5: 81, B5: 83, C6: 84, D6: 86, E6: 88, G6: 91, C7: 96 };
 
-  // Nota: serie di parziali [rapporto, gain, moltiplicatore di durata]
+  // Note: series of partials [ratio, gain, duration multiplier]
   function tone(f, t, o = {}) {
     const { dur: d0 = 1.5, gain = 0.25, type = 'sine', attack = 0.004, partials = [[1, 1, 1]], vib = 0, glide = null, detune = 0 } = o;
     const { sustain = false, rel = 1 } = o;
@@ -108,8 +108,8 @@ const Sounds = (() => {
 
   const seq = (notes, t, step, o) => notes.forEach((n, i) => tone(hz(n), t + i * step * 1.6, o));
 
-  // --- melodie di pubblico dominio (autori morti da oltre 70 anni), suonate dal sintetizzatore ---
-  // notes: [nota MIDI, battito di inizio, durata in battiti, gain opzionale]
+  // --- public-domain melodies (composers dead for over 70 years), played by the synthesizer ---
+  // notes: [MIDI note, start beat, duration in beats, optional gain]
   const melPiece = (beat, timbre, notes, gain = 0.2) => (t) => notes.forEach(([n, b, d, g]) =>
     tone(hz(n), t + b * beat, { dur: Math.max(0.8, d * beat * 0.9), gain: g ?? gain, attack: 0.01, partials: timbre }));
 
@@ -137,7 +137,7 @@ const Sounds = (() => {
     [67, 0, 0.5], [67, 0.5, 0.5], [67, 1, 0.5], [63, 1.5, 3], [55, 0, 0.5, 0.2], [55, 0.5, 0.5, 0.2], [55, 1, 0.5, 0.2], [51, 1.5, 3, 0.2],
     [65, 5, 0.5], [65, 5.5, 0.5], [65, 6, 0.5], [62, 6.5, 4], [53, 5, 0.5, 0.2], [53, 5.5, 0.5, 0.2], [53, 6, 0.5, 0.2], [50, 6.5, 4, 0.2]];
 
-  // Gymnopédie n.1: accompagnamento Sol-maj7 / Re-maj7 e melodia
+  // Gymnopédie No. 1: G-maj7 / D-maj7 accompaniment and melody
   const GYMNO = [];
   for (let i = 0; i < 6; i++) {
     const b = i * 3, g = i % 2 === 0;
@@ -146,16 +146,16 @@ const Sounds = (() => {
   }
   GYMNO.push([78, 3, 3, 0.17], [81, 6, 2, 0.17], [79, 8, 1, 0.17], [78, 9, 3, 0.17], [73, 12, 2, 0.17], [71, 14, 1, 0.17], [73, 15, 2, 0.17], [74, 17, 4, 0.18]);
 
-  // Canone di Pachelbel: basso a due battiti e prime otto note della melodia
+  // Pachelbel's Canon: two-beat bass and the first eight melody notes
   const CANON = [];
   [50, 45, 47, 42, 43, 38, 43, 45].forEach((n, i) => CANON.push([n, i * 2, 3.6, 0.16]));
-  // accordi prolungati (D A Bm F#m G D G A) sotto il basso
+  // sustained chords (D A Bm F#m G D G A) under the bass
   [[57, 62, 66], [57, 61, 64], [59, 62, 66], [57, 61, 66], [55, 59, 62], [57, 62, 66], [55, 59, 62], [57, 61, 64]]
     .forEach((c, i) => c.forEach((n) => CANON.push([n, i * 2, 3.8, 0.07])));
   [78, 76, 74, 73, 71, 69, 71, 73].forEach((n, i) => CANON.push([n, i * 2, 2, 0.17]));
   CANON.push([74, 16, 5, 0.18], [50, 16, 5, 0.16], [57, 16, 5, 0.07], [62, 16, 5, 0.07], [66, 16, 5, 0.07]);
 
-  // Preludio in Do (Bach): 8 note per battuta, ripetute due volte
+  // Prelude in C (Bach): 8 notes per bar, repeated twice
   const PRELUDE = [];
   [[48, 52, 55, 60, 64], [48, 50, 57, 62, 65], [47, 50, 55, 62, 65], [48, 52, 55, 60, 64]].forEach((c, bar) => {
     const pat = [c[0], c[1], c[2], c[3], c[4], c[2], c[3], c[4]];
@@ -177,7 +177,7 @@ const Sounds = (() => {
   const FRERE = seqNotes([[60, 1], [62, 1], [64, 1], [60, 1], [60, 1], [62, 1], [64, 1], [60, 1], [64, 1], [65, 1], [67, 2], [64, 1], [65, 1], [67, 2],
     [67, 0.5], [69, 0.5], [67, 0.5], [65, 0.5], [64, 1], [60, 1], [67, 0.5], [69, 0.5], [67, 0.5], [65, 0.5], [64, 1], [60, 1], [60, 1], [55, 1], [60, 2]]);
 
-  // accompagnamento di basso (e quinta) per i brani che ne sono privi: [nota MIDI, inizio, durata]
+  // bass (and fifth) accompaniment for pieces that lack one: [MIDI note, start, duration]
   const addBass = (piece, line, g = 0.17) => { line.forEach(([n, b, d]) => piece.push([n, b, d, g], [n + 7, b, d, g * 0.45])); return piece; };
   addBass(PRELUDE, [[36, 0, 16], [36, 16, 16], [31, 32, 16], [36, 48, 16]], 0.18);
   addBass(MORNING, [[40, 0, 4], [47, 4, 4], [40, 8, 4], [47, 12, 4], [54, 16, 4], [47, 20, 4], [40, 24, 6]]);
@@ -187,7 +187,7 @@ const Sounds = (() => {
   addBass(BRAHMS, [[48, 0, 4], [48, 4, 4], [43, 8, 4], [41, 12, 2], [43, 14, 1], [48, 15, 3]]);
   addBass(FRERE, [[48, 0, 4], [43, 4, 4], [48, 8, 4], [43, 12, 4], [48, 16, 4], [43, 20, 4], [48, 24, 4]]);
 
-  // --- brano personale: salvato in IndexedDB, solo in locale ---
+  // --- custom sound: stored in IndexedDB, local only ---
   const idbOp = (mode, fn) => new Promise((res, rej) => {
     const r = indexedDB.open('timer-sounds', 1);
     r.onupgradeneeded = () => r.result.createObjectStore('custom');
@@ -224,7 +224,7 @@ const Sounds = (() => {
     custom = null;
     try { await idbOp('readwrite', (st) => st.delete('track')); } catch (e) {}
   }
-  // i primi 30 s, con dissolvenza finale
+  // the first 30 s, with a final fade-out
   function playCustom(t) {
     const src = ctx.createBufferSource();
     const g = ctx.createGain();
@@ -275,7 +275,7 @@ const Sounds = (() => {
     { id: 'clFrere', name: 'Fra Martino', play: melPiece(0.3, VIBES, FRERE, 0.22) },
   ];
 
-  // sezioni del menu, nell'ordine di visualizzazione
+  // menu sections, in display order
   const GROUPS = ['classic', 'bells', 'instr', 'nature'];
   const GROUP_OF = {};
   const put = (g, ids) => ids.forEach((id) => { GROUP_OF[id] = g; });
