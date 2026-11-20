@@ -32,5 +32,16 @@
     document.getElementById('wMin').addEventListener('click', () => w.minimize());
     document.getElementById('wMax').addEventListener('click', () => w.toggleMaximize());
     document.getElementById('wClose').addEventListener('click', () => w.close());
+
+    // resize grip in the bottom-right corner; it pulses for ~3 s on the very first launch
+    const grip = document.getElementById('grip');
+    grip.hidden = false;
+    grip.addEventListener('mousedown', (e) => { if (e.button === 0) { e.preventDefault(); w.startResizeDragging('SouthEast'); } });
+    try {
+      if (!localStorage.getItem('timer.gripHint')) {
+        localStorage.setItem('timer.gripHint', '1');
+        grip.classList.add('hint');
+      }
+    } catch {}
   });
 })();
