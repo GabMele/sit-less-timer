@@ -10,7 +10,7 @@
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
-  const DEF = { duration: 25, presets: [25, 55], sound: 'bowl', volume: 0.7, reps: 10, every: 3, onTop: false, keep: 30, theme: 'system', accent: 'teal', mode: 'up' };
+  const DEF = { duration: 25, presets: [25, 55], sound: 'chimes', volume: 0.7, reps: 10, every: 3, onTop: false, keep: 30, theme: 'system', accent: 'teal', mode: 'up' };
   const S = { ...DEF, ...store.get('timer.settings', {}) };
   if (S.sound !== 'custom' && !Sounds.list.some((x) => x.id === S.sound)) S.sound = DEF.sound;   // sound removed in a previous version
   // migration: the old default presets (27, 52) become the new ones (25, 55)
