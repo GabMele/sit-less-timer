@@ -11,7 +11,7 @@ A minimalist analog timer for Windows that keeps you from sitting too long. One-
 - **Repeating alerts.** Choose the sound (32 synthesized sounds, including public-domain classical melodies, no audio files, plus one optional sound of your own: first 30 s with fade-out, stored locally), volume, number of repeats and interval.
 - **Activity summary.** Active time and breaks for today and the last 7 days. Breaks over 3 hours count as absence, not as a break.
 - **Taskbar progress** and window flashing when time is up.
-- **Compact window**, resizable, optional always-on-top, remembers its position.
+- **Compact window**, resizable, optional always-on-top and launch at Windows startup, remembers its position.
 - **Light / dark / system theme**, 6 accent colors, UI in English, Italian, French and Spanish.
 
 ## Install

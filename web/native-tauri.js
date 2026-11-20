@@ -13,6 +13,9 @@
         if (x.protocol === 'https:' && ['nextquo.com', 'www.nextquo.com', 'ko-fi.com'].includes(x.hostname)) T.opener.openUrl(x.href);
       } catch {}
     },
+    // launch at Windows login (the OS registry is the source of truth, not localStorage)
+    getAutostart: () => T.autostart.isEnabled(),
+    setAutostart: (v) => (v ? T.autostart.enable() : T.autostart.disable()),
     attention: () => w.requestUserAttention(2),
     setTheme: (bg) => { if (ok(bg)) w.setBackgroundColor(bg).catch(() => {}); },
     version: () => T.app.getVersion(),

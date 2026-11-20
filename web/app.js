@@ -443,6 +443,15 @@
   $('#sPresets').value = S.presets.join(', ');
   $('#sTop').checked = !!S.onTop;
   native.setOnTop(S.onTop);
+  // launch at login: only in the desktop app, and the checkbox mirrors the real OS state
+  if (window.native && native.getAutostart) {
+    const sAuto = $('#sAuto');
+    $('#rowAuto').hidden = false;
+    native.getAutostart().then((v) => { sAuto.checked = !!v; }).catch(() => { $('#rowAuto').hidden = true; });
+    sAuto.addEventListener("change", () => {
+      native.setAutostart(sAuto.checked).catch(() => { sAuto.checked = !sAuto.checked; });
+    });
+  }
 
   sSound.addEventListener('change', () => { S.sound = sSound.value; saveS(); Sounds.play(S.sound, S.volume); });
   const sPlay = $('#sPlay');
