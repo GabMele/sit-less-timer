@@ -4,7 +4,7 @@
   --bg: #000; --fg: #cfd9d9; --fg-strong: #e6efef; --dim: #7c8a8a; --line: #2b3636; --line-hi: #4a5a5a;
   --hover: #151a1a; --surface: #0a0e0e; --field: #0d1111; --field-fg: #dfe8e8; --chip-fg: #aebcbc;
   --tile-bg: #070a0a; --tile-line: #1c2424; --bar-bg: #0b0f0f;
-  --track: #121818; --tick: #3a4545; --tick-maj: #8a9a9a; --hand: #eef6f6; --sec: #9fb0b0; --mark: #fff;
+  --track: #1f2929; --plan-pct: 40%; --tick: #3a4545; --tick-maj: #8a9a9a; --hand: #eef6f6; --sec: #9fb0b0; --mark: #fff;
   --icon-hi: #fff; --brand: #9fb0b0; --danger: #e07070; --stop-icon: #9aaaaa;
   color-scheme: dark;
 }
@@ -13,7 +13,7 @@
   --bg: #f4f7f7; --fg: #2a3535; --fg-strong: #0f1a1a; --dim: #637171; --line: #cbd4d4; --line-hi: #9aa8a8;
   --hover: #e2e8e8; --surface: #ffffff; --field: #ffffff; --field-fg: #1a2626; --chip-fg: #3a4848;
   --tile-bg: #ffffff; --tile-line: #d5dddd; --bar-bg: #e1e8e8;
-  --track: #e1e8e8; --tick: #b3bfbf; --tick-maj: #5f6e6e; --hand: #1a2626; --sec: #3a4848; --mark: #1a2626;
+  --track: #e1e8e8; --plan-pct: 24%; --tick: #b3bfbf; --tick-maj: #5f6e6e; --hand: #1a2626; --sec: #3a4848; --mark: #1a2626;
   --icon-hi: #000; --brand: #4a5858; --danger: #c0392b; --stop-icon: #4a5858;
   color-scheme: light;
 }
@@ -80,7 +80,7 @@ body {
 .tick.top { stroke: var(--accent); stroke-width: 1.8; }
 .track { fill: none; stroke: var(--track); }
 .plan, .done, .over { fill: none; }
-.plan { stroke: color-mix(in srgb, var(--accent) 24%, var(--bg)); }
+.plan { stroke: color-mix(in srgb, var(--accent) var(--plan-pct), var(--bg)); }
 .done { stroke: var(--accent); }
 .over { stroke: var(--warm); }
 .mark { stroke: var(--mark); stroke-width: 1.4; stroke-linecap: round; }
