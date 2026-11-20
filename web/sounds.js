@@ -252,7 +252,7 @@ const Sounds = (() => {
     { id: 'flute', name: 'Flauto', play: (t) => { tone(hz(N.A4), t, { dur: 2.2, gain: 0.22, attack: 0.18, vib: 0.004, partials: [[1, 1, 1], [2, 0.12, 1]] }); tone(hz(N.C5), t + 0.7, { dur: 2.4, gain: 0.2, attack: 0.18, vib: 0.004, partials: [[1, 1, 1], [2, 0.12, 1]] }); } },
     { id: 'vibes', name: 'Vibrafono', play: (t) => seq([N.F5, N.A5, N.C6], t, 0.33, { dur: 2.6, gain: 0.25, vib: 0.002, partials: VIBES }) },
     { id: 'glass', name: 'Cristallo', play: (t) => tone(hz(N.A5), t, { dur: 3.2, gain: 0.2, partials: GLASS }) },
-    { id: 'chimes', name: 'Chime al vento', play: (t) => { const sc = [N.C6, N.D6, N.E6, N.G6, N.D5 + 12, N.A5]; let d = 0; for (let i = 0; i < 14; i++) { tone(hz(sc[Math.floor(Math.random() * sc.length)]), t + d, { dur: 2.2, gain: 0.14, partials: GLOCK }); d += 0.1 + Math.random() * 0.25; } } },
+    { id: 'chimes', name: 'Campanelli a vento', play: (t) => { const sc = [N.C6, N.D6, N.E6, N.G6, N.D5 + 12, N.A5]; let d = 0; for (let i = 0; i < 14; i++) { tone(hz(sc[Math.floor(Math.random() * sc.length)]), t + d, { dur: 2.2, gain: 0.14, partials: GLOCK }); d += 0.1 + Math.random() * 0.25; } } },
     { id: 'gong', name: 'Gong lieve', play: (t) => tone(110, t, { dur: 6.5, gain: 0.35, attack: 0.03, partials: GONG }) },
     { id: 'dingdong', name: 'Ding-dong', play: (t) => { tone(hz(N.E5), t, { dur: 2.2, gain: 0.28, partials: BOWL }); tone(hz(N.C5), t + 0.65, { dur: 3, gain: 0.28, partials: BOWL }); } },
     { id: 'piano', name: 'Piano dolce', play: (t) => seq([N.C5, N.G4, N.E5, N.G5], t, 0.3, { dur: 2.2, gain: 0.22, partials: PIANO }) },
