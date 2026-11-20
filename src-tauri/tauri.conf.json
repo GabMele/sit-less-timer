@@ -7,7 +7,7 @@
   "app": {
     "withGlobalTauri": true,
     "windows": [
-      { "label": "main", "title": "Sit-less Timer", "width": 340, "height": 440, "minWidth": 220, "minHeight": 280, "decorations": false, "backgroundColor": "#000000" }
+      { "label": "main", "title": "Sit-less Timer", "width": 242, "height": 308, "minWidth": 220, "minHeight": 280, "decorations": false, "backgroundColor": "#000000" }
     ],
     "security": {
       "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ipc: http://ipc.localhost"
