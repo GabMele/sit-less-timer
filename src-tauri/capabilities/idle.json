@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "idle-prompt",
+  "description": "Overlay cards of the inactivity prompt: they only need events (the answer and the close signal).",
+  "windows": ["idle-*"],
+  "permissions": ["core:event:default"]
+}

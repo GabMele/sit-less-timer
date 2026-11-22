@@ -37,7 +37,8 @@
   <div id="center">
     <div id="tTop" class="lbl"></div>
     <div id="tMain" data-i18n-title="title_mode"></div>
-    <div id="tBot" class="lbl"></div>    <div id="durRow">
+    <div id="tBot" class="lbl"></div>
+    <button id="btnResume" class="resume" type="button" hidden data-i18n="resume"></button>    <div id="durRow">
       <div id="chips"></div>
       <span id="durEdit" hidden>
         <button type="button" class="chip step" id="durDec" aria-label="-1 min" title="-1 min">−</button>
@@ -86,6 +87,26 @@
   <label><span data-i18n="preset_b"></span> <input id="sPre2" class="n3" type="number" min="1" max="600" step="1"></label>
   <label class="chk"><input id="sTop" type="checkbox"> <span data-i18n="ontop"></span></label>
   <label class="chk" id="rowAuto" hidden><input id="sAuto" type="checkbox"> <span data-i18n="autostart"></span></label>
+  <label id="rowIdle" hidden><span data-i18n="idle_set"></span> <input id="sIdle" class="n3" type="number" min="0" max="999" step="1"></label>
+  <div id="grpPrompt" hidden>
+    <p class="hint" style="margin:12px 0 8px;font-weight:600" data-i18n="pg_h"></p>
+    <label><span data-i18n="pg_x"></span> <select id="sPromptH"></select></label>
+    <label><span data-i18n="pg_y"></span> <select id="sPromptV"></select></label>
+    <label class="chk"><input id="sPromptSnd" type="checkbox"> <span data-i18n="pg_snd"></span></label>
+    <label><span data-i18n="pg_snd_id"></span>
+      <span class="row">
+        <select id="sPromptSndId"></select>
+        <button class="mini" id="sPromptSndPlay" type="button" data-i18n-title="play"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      </span>
+    </label>
+    <label><span data-i18n="pg_ca"></span> <input id="sPromptCa" type="color"></label>
+    <label><span data-i18n="pg_cb"></span> <input id="sPromptCb" type="color"></label>
+    <div class="row" style="justify-content:flex-end;gap:8px;margin:-2px 0 9px">
+      <button class="mini txt" id="sPromptReset" type="button" data-i18n="pg_reset"></button>
+      <button class="mini txt" id="sPromptTest" type="button" data-i18n="pg_test"></button>
+    </div>
+  </div>
+  <label class="chk" id="rowResume" hidden><input id="sResume" type="checkbox"> <span data-i18n="autoresume"></span></label>
   <label><span data-i18n="mode"></span> <select id="sMode"></select></label>
   <label><span data-i18n="theme"></span> <select id="sTheme"></select></label>
   <label><span data-i18n="accent"></span> <span class="swatches" id="sAccent" role="radiogroup"></span></label>

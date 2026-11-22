@@ -2,7 +2,7 @@
   'use strict';
   const $ = (s) => document.querySelector(s);
   const SVGNS = 'http://www.w3.org/2000/svg';
-  const native = window.native || { openExternal(u) { window.open(u, '_blank', 'noopener'); }, setOnTop() {}, getOnTop: async () => false, attention() {}, progress() {}, setTheme() {}, version: async () => '' };
+  const native = window.native || { openExternal(u) { window.open(u, '_blank', 'noopener'); }, setOnTop() {}, hideIdlePrompt() {}, getOnTop: async () => false, attention() {}, progress() {}, setTheme() {}, version: async () => '' };
   native.version().then((v) => { if (v) $('#ver').textContent = 'v' + v; }).catch(() => {});
 
   /* ---------- persistence ---------- */
@@ -10,7 +10,7 @@
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
-  const DEF = { duration: 25, presets: [25, 55], sound: 'chimes', volume: 0.7, reps: 10, every: 3, onTop: false, keep: 30, theme: 'system', accent: 'teal', mode: 'up', dayStart: 4, dayEnd: 4 };
+  const DEF = { duration: 25, presets: [25, 55], sound: 'chimes', volume: 0.7, reps: 10, every: 3, onTop: false, keep: 30, theme: 'system', accent: 'teal', mode: 'up', dayStart: 4, dayEnd: 4, autoResume: false, idleMin: 5, promptH: 'right', promptV: 'bottom', promptSound: true, promptSoundId: 'flute' };
   const S = { ...DEF, ...store.get('timer.settings', {}) };
   if (S.sound !== 'custom' && !Sounds.list.some((x) => x.id === S.sound)) S.sound = DEF.sound;   // sound removed in a previous version
   // migration: the old default presets (27, 52) become the new ones (25, 55)
@@ -39,6 +39,12 @@
   // exactly two quick durations (first / second)
   if (!Array.isArray(S.presets)) S.presets = DEF.presets;
   S.presets = [0, 1].map((i) => clamp(Math.round(Number(S.presets[i])) || DEF.presets[i], 1, 600));
+  S.idleMin = Number.isFinite(Number(S.idleMin)) ? clamp(Math.round(Number(S.idleMin)), 0, 999) : DEF.idleMin;
+  if (!['left', 'center', 'right'].includes(S.promptH)) S.promptH = DEF.promptH;
+  if (!['top', 'middle', 'bottom'].includes(S.promptV)) S.promptV = DEF.promptV;
+  S.promptSound = S.promptSound !== false;
+  if (!Sounds.list.some((x) => x.id === S.promptSoundId && x.group !== 'classic' && x.id !== 'custom')) S.promptSoundId = DEF.promptSoundId;
+  S.promptColors = { a: null, b: null, ...(S.promptColors && typeof S.promptColors === 'object' ? S.promptColors : {}) };
   S.reps = clamp(Math.round(Number(S.reps)) || DEF.reps, 1, 999);
   S.every = clamp(Number(S.every) || DEF.every, 0.5, 999);
   S.colors = { work: null, rest: null, over: null, ...(S.colors && typeof S.colors === 'object' ? S.colors : {}) };
@@ -90,11 +96,12 @@
     if (!merged) seg('a');
     tick();
   }
-  function pause() {
+  // `at` lets the pause start in the past (inactivity detected later): the time since `at` is not counted
+  function pause(at = Date.now()) {
     if (status !== 'running') return;
-    acc += Date.now() - startedAt;
+    acc += at - startedAt;
     setStatus('paused');
-    seg('p');
+    seg('p', at);
     tick();
   }
   function stop() {
@@ -127,8 +134,7 @@
     if (o.t === 'p' && d < MIN_BREAK) return;
     L.segs.push({ t: o.t, s: o.s, e: end });
   }
-  function seg(type) {
-    const n = Date.now();
+  function seg(type, n = Date.now()) {
     closeOpen(n);
     L.open = type ? { t: type, s: n } : null;
     saveLog();
@@ -229,10 +235,12 @@
       out += `<circle class="track" r="${r}" stroke-width="${f(thin)}"/>` + seg(0, T, 'plan') +
         (down ? (over ? seg(0, m, 'over') : seg(0, m, 'done')) : seg(0, Math.min(m, T), 'done') + seg(T, m, 'over'));
     }
-    // goal marker
+    // goal marker: the line across the ring band at the target minute, plus a triangle in the gap outside the
+    // outer ring whose tip points out toward the dial tick of that minute
     const k = Math.ceil(T / 60) - 1, rk = rad(k), ang = (T - k * 60) * 6;
     const [mx0, my0] = polar(rk + th / 2 + 1.5, ang), [mx1, my1] = polar(rk - th / 2 - 1.5, ang);
-    out += `<line class="mark" x1="${mx0}" y1="${my0}" x2="${mx1}" y2="${my1}"/>`;
+    out += `<line class="markline" x1="${mx0}" y1="${my0}" x2="${mx1}" y2="${my1}"/>`;
+    out += `<polygon class="mark" points="0,-94 -3.2,-87 3.2,-87" transform="rotate(${f(ang)})"/>`;
     // hand (one turn per hour) and seconds dot (one turn per minute)
     const ha = (m % 60) * 6;
     const [hx0, hy0] = polar(42, ha), [hx1, hy1] = polar(90, ha);
@@ -312,7 +320,7 @@
     return h > 0 ? `${h}:${p(m)}:${p(ss)}` : `${p(m)}:${p(ss)}`;
   }
 
-  const tMain = $('#tMain'), tTop = $('#tTop'), tBot = $('#tBot');
+  const tMain = $('#tMain'), tTop = $('#tTop'), tBot = $('#tBot'), btnResume = $('#btnResume');
   let lastProg = '';
   function render(el) {
     drawRings(el);
@@ -323,12 +331,15 @@
     const txt = down
       ? (status === 'idle' ? fmtClock(T) : over ? '+' + fmtClock(el - T) : fmtClock(Math.ceil((T - el) / 1000) * 1000))
       : fmtClock(el);
-    tMain.textContent = txt;
-    tMain.classList.toggle('long', txt.length > 5);
-    tMain.classList.toggle('over', over);
-    tTop.textContent = status === 'idle' ? t('ready') : status === 'paused' ? t('paused') : down ? (over ? t('beyond') : t('remaining')) : t('elapsed');
+    const brk = status === 'paused' ? breakShown() : 0;   // real break in progress: show how long it lasts
+    const shownTxt = brk ? fmtClock(brk) : txt;
+    tMain.textContent = shownTxt;
+    tMain.classList.toggle('long', shownTxt.length > 5);
+    tMain.classList.toggle('over', over && !brk);
+    btnResume.hidden = !brk;
+    tTop.textContent = brk ? t('break_from') : status === 'idle' ? t('ready') : status === 'paused' ? t('paused') : down ? (over ? t('beyond') : t('remaining')) : t('elapsed');
     tBot.classList.toggle('over', over);
-    tBot.textContent = status === 'idle' ? '' : down
+    tBot.textContent = status === 'idle' || brk ? '' : down
       ? (over ? `${alertIdx}/${S.reps}` : t('spent', fmtClock(el)))
       : over ? t('over', fmtClock(el - T), `${alertIdx}/${S.reps}`) : t('left', fmtClock(Math.ceil((T - el) / 1000) * 1000));
     document.title = status === 'idle' ? 'Sit-less Timer' : `${txt} – Sit-less Timer`;
@@ -369,7 +380,14 @@
     if (status !== 'idle' && Date.now() - lastHb > 5000) { lastHb = Date.now(); saveLog(); }
     render(el);
   }
-  setInterval(tick, 200);
+  // One redraw every 500 ms, aligned to the moment the displayed second changes (so the digits are never late).
+  // Events (start, pause, settings...) call tick() directly, so they still update the display immediately.
+  // TODO: measure CPU at 200 ms vs 1 s (see TODO.md) before deciding the final interval.
+  (function loop() {
+    tick();
+    const phase = status === 'running' ? elapsedMs() % 500 : Date.now() % 500;
+    setTimeout(loop, 500 - phase + 15);
+  })();
 
   /* ---------- top bar ---------- */
   function refreshToday() {
@@ -431,9 +449,100 @@
     else if (e.key === 'Escape') { setDuration(prevDur); durIn.blur(); }
   });
 
+  /* ---------- inactivity detection (system-wide keyboard / mouse) ---------- */
+  // 1) Running: after S.idleMin minutes without input, "Are you still there?" cards appear on every monitor for
+  //    PROMPT_MS. Any input (or the button) cancels it. Otherwise the timer pauses retroactively, from the last
+  //    input, so the away time is not counted as sitting. Reading without touching anything is safe: the card is shown.
+  // 2) Paused by this check (always) or paused by hand + autoResume setting: once away for MIN_BREAK, the first input
+  //    restarts the timer (new cycle).
+  //    Never from "idle": a deliberate Stop does not restart by itself.
+  const PROMPT_MS = 30000;   // 10 s small card, 10 s growing, 10 s at full size (see idle.js)
+  let awayArmed = false, awayStatus = '', awayFrom = 0, lastIdle = 0, idleBusy = false, promptAt = 0;
+  let cueDone = false;   // the 10 s cue was already played for this prompt
+  let pausedByIdle = false;   // the current pause was started by the inactivity check: the first input resumes it
+  const hex6 = (c) => { c = (c || '').trim().replace('#', ''); if (c.length === 3) c = c.replace(/./g, '$&$&'); return c; };
+  // card colors: a diagonal gradient of two colors (vivid by default, so it stands out on dark and light desktops).
+  // The text color (dark or white) is the one with the better worst-case contrast against both colors, and the plate
+  // behind the text is the opposite color, so the text stays readable even with similar or clashing colors.
+  const PROMPT_DEFAULT = { a: '#ff9f1c', b: '#e8457c' };
+  const lum = (hex) => {
+    const c = [0, 2, 4].map((i) => parseInt(hex.substr(i, 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  const contrast = (x, y) => { const [hi, lo] = [lum(x), lum(y)].sort((p, q) => q - p); return (hi + 0.05) / (lo + 0.05); };
+  function promptPalette() {
+    const ca = hex6(S.promptColors.a || PROMPT_DEFAULT.a), cb = hex6(S.promptColors.b || PROMPT_DEFAULT.b);
+    const dark = '101616', light = 'ffffff';
+    const worst = (t) => Math.min(contrast(t, ca), contrast(t, cb));
+    const tx = worst(dark) >= worst(light) ? dark : light;
+    return { ca, cb, tx, pl: tx === dark ? light : dark };
+  }
+  function showPrompt(seconds = PROMPT_MS / 1000) {
+    native.showIdlePrompt({ seconds, end: Date.now() + seconds * 1000, lang: S.lang, h: S.promptH, v: S.promptV, growAfter: 10000, ...promptPalette() });
+  }
+  // gentle cue once the card has started to grow (not immediately): a single soft note, never over an alarm in progress
+  const playCue = () => Sounds.play(S.promptSoundId, Math.min(S.volume, 0.5));
+  function promptCue() {
+    if (S.promptSound && !Sounds.playing) playCue();
+  }
+  function cancelPrompt() { if (!promptAt) return; promptAt = 0; native.hideIdlePrompt(); }
+  // settings preview: shows the card for a few seconds with the current options (and the cue, to hear it)
+  // Like the real prompt, any keyboard / mouse input closes it (after a short grace: the click on the test button is input too).
+  let testTimers = [], testWatch = 0;
+  function endTest() { testTimers.forEach(clearTimeout); testTimers = []; clearInterval(testWatch); testWatch = 0; native.hideIdlePrompt(); }
+  function testPrompt() {
+    testTimers.forEach(clearTimeout); testTimers = []; clearInterval(testWatch);
+    showPrompt(14);
+    const t0 = Date.now();
+    let prev = null;
+    testWatch = setInterval(async () => {
+      try {
+        const idle = await native.idleMs();
+        if (idle === null) return;
+        if (Date.now() - t0 > 1500 && prev !== null && idle < prev) { endTest(); return; }
+        prev = idle;
+      } catch {}
+    }, 250);
+    testTimers = [setTimeout(promptCue, 10000), setTimeout(endTest, 14000)];
+  }
+  if (native.onIdleYes) native.onIdleYes(() => { cancelPrompt(); if (testTimers.length) endTest(); });
+  setInterval(async () => {
+    if (!native.idleMs) return;
+    const askOn = S.idleMin > 0 && status === 'running';
+    if (status !== 'paused') pausedByIdle = false;
+    const resumeOn = (S.autoResume || pausedByIdle) && status === 'paused';
+    if (!askOn && !resumeOn) { cancelPrompt(); awayArmed = false; return; }
+    if (idleBusy) return;
+    idleBusy = true;
+    try {
+      const st = status;
+      const idle = await native.idleMs();
+      const now = Date.now();
+      if (idle === null || status !== st) return;
+      if (askOn) {
+        if (promptAt) {
+          if (!cueDone && now - promptAt >= 10000) { cueDone = true; promptCue(); }
+          if (idle < lastIdle) cancelPrompt();                       // input: the user is here
+          else if (now - promptAt >= PROMPT_MS) { cancelPrompt(); pause(Math.max(awayFrom, startedAt)); pausedByIdle = true; }
+        } else if (idle >= S.idleMin * 60000) {
+          awayFrom = now - idle; promptAt = now; cueDone = false; showPrompt();
+        }
+      } else {
+        if (awayArmed && awayStatus !== status) awayArmed = false;   // status changed meanwhile: the away period is void
+        if (idle >= MIN_BREAK) {
+          if (!awayArmed) { awayArmed = true; awayStatus = status; }
+        } else if (awayArmed && idle < lastIdle) {
+          awayArmed = false; start();                                // input after being away: restart (new cycle)
+        }
+      }
+      lastIdle = idle;
+    } catch {} finally { idleBusy = false; }
+  }, 500);
+
   /* ---------- buttons ---------- */
   $('#btnGo').addEventListener('click', () => (status === 'running' ? pause() : start()));
   $('#btnStop').addEventListener('click', stop);
+  btnResume.addEventListener('click', start);
   window.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
     if (e.key === 'Escape') return closePanels();
@@ -536,7 +645,7 @@
   buildThemeOptions();
   sLang.addEventListener('change', () => {
     S.lang = sLang.value; saveS(); I18N.setLang(S.lang); I18N.apply();
-    buildSoundOptions(); buildKeepOptions(); buildThemeOptions(); buildModeOptions(); buildChips(); refreshToday(); tick();
+    buildSoundOptions(); buildKeepOptions(); buildThemeOptions(); buildModeOptions(); buildPromptOptions(); buildChips(); refreshToday(); tick();
     if (pSum.classList.contains('open')) renderSummary();
   });
   sSound.value = S.sound;
@@ -547,6 +656,60 @@
   $('#sPre2').value = S.presets[1];
   $('#sTop').checked = !!S.onTop;
   native.setOnTop(S.onTop);
+  // position selects of the "Are you still there?" card (labels follow the language)
+  function buildPromptOptions() {
+    const fill = (sel, keys, cur) => {
+      sel.innerHTML = '';
+      for (const k of keys) { const o = document.createElement('option'); o.value = k; o.textContent = t('pos_' + k); sel.appendChild(o); }
+      sel.value = cur;
+    };
+    fill($('#sPromptH'), ['left', 'center', 'right'], S.promptH);
+    fill($('#sPromptV'), ['top', 'middle', 'bottom'], S.promptV);
+    // cue sound: same groups as the main list, minus the classical pieces (too long and too recognizable) and the personal sound
+    const sel = $('#sPromptSndId');
+    sel.innerHTML = '';
+    for (const g of Sounds.groups.filter((x) => x !== 'classic' && x !== 'mine')) {
+      const og = document.createElement('optgroup');
+      og.label = I18N.groupName(g);
+      for (const s of Sounds.list.filter((x) => x.group === g)) {
+        const o = document.createElement('option');
+        o.value = s.id; o.textContent = I18N.soundName(s.id, s.name); og.appendChild(o);
+      }
+      sel.appendChild(og);
+    }
+    sel.value = S.promptSoundId;
+  }
+  $('#sPromptSndId').addEventListener('change', () => { S.promptSoundId = $('#sPromptSndId').value; saveS(); playCue(); });
+  $('#sPromptSndPlay').addEventListener('click', () => { if (Sounds.playing) Sounds.stop(); else playCue(); });
+  $('#sPromptH').addEventListener('change', () => { S.promptH = $('#sPromptH').value; saveS(); });
+  $('#sPromptV').addEventListener('change', () => { S.promptV = $('#sPromptV').value; saveS(); });
+  // inactivity options: desktop app on Windows only (needs the system-wide idle time)
+  if (window.native && native.idleMs) {
+    native.idleMs().then((v) => {
+      if (v === null) return;
+      const sResume = $('#sResume'), sIdle = $('#sIdle');
+      $('#rowResume').hidden = false; $('#rowIdle').hidden = false; $('#grpPrompt').hidden = false;
+      buildPromptOptions();
+      const inA = $('#sPromptCa'), inB = $('#sPromptCb');
+      const syncPromptColors = () => { inA.value = S.promptColors.a || PROMPT_DEFAULT.a; inB.value = S.promptColors.b || PROMPT_DEFAULT.b; };
+      syncPromptColors();
+      inA.addEventListener('input', () => { S.promptColors.a = inA.value; saveS(); });
+      inB.addEventListener('input', () => { S.promptColors.b = inB.value; saveS(); });
+      $('#sPromptReset').addEventListener('click', () => { S.promptColors = { a: null, b: null }; saveS(); syncPromptColors(); });
+      $('#sPromptTest').addEventListener('click', testPrompt);
+      const sSnd = $('#sPromptSnd');
+      sSnd.checked = S.promptSound;
+      sSnd.addEventListener('change', () => { S.promptSound = sSnd.checked; saveS(); });
+      sResume.checked = !!S.autoResume;
+      sResume.addEventListener('change', () => { S.autoResume = sResume.checked; saveS(); });
+      sIdle.value = S.idleMin;
+      sIdle.addEventListener('input', () => {
+        const n = Math.round(Number(sIdle.value));
+        if (sIdle.value !== '' && n >= 0) { S.idleMin = clamp(n, 0, 999); saveS(); }
+      });
+      sIdle.addEventListener('change', () => { sIdle.value = S.idleMin; });
+    }).catch(() => {});
+  }
   // launch at login: only in the desktop app, and the checkbox mirrors the real OS state
   if (window.native && native.getAutostart) {
     const sAuto = $('#sAuto');

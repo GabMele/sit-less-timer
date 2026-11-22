@@ -1,0 +1,45 @@
+/* "Are you still there?" overlay card: one frameless transparent window per monitor.
+   The card is 400x240 and is scaled to the window size by idle.js (the window is small first, then full size).
+   Colors come from the main window: a two-color diagonal gradient, a text color picked for contrast against both
+   colors, and a semi-transparent plate behind the texts (the opposite of the text color) so they stay readable
+   even when the user picks colors close to each other. */
+:root { --ca: #ff9f1c; --cb: #e8457c; --tx: #101616; --pl: #ffffff; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; }
+body { font: 16px/1.3 "Segoe UI", system-ui, sans-serif; color: var(--tx); }
+
+/* fade out / in around the resize (on the body, because the card's own fade-in animation holds its opacity) */
+body { opacity: 1; transition: opacity .6s ease-in-out; }
+body.dip { opacity: 0; transition: opacity .4s ease-in; }
+
+#card {
+  position: absolute; left: 0; top: 0; width: 400px; height: 240px; padding: 14px 20px 20px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background: linear-gradient(135deg, var(--ca), var(--cb)); color: var(--tx);
+  border: 3px solid color-mix(in srgb, var(--tx) 80%, transparent); border-radius: 18px;
+  transform-origin: 0 0; overflow: hidden;
+  opacity: 0; animation: fadeIn 2s ease-in-out forwards;
+}
+#card.out { animation: fadeOut .3s ease-in forwards; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+.plate {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 22px 10px;
+  background: color-mix(in srgb, var(--pl) 62%, transparent); border-radius: 14px;
+}
+h1 { margin: 0; font-size: 26px; font-weight: 700; text-align: center; }
+#num { font-size: 64px; font-weight: 400; line-height: 1; font-variant-numeric: tabular-nums; }
+#sub { margin: 0; font-size: 16px; text-align: center; }
+#yes {
+  min-height: 44px; padding: 0 28px; font: inherit; font-size: 18px; font-weight: 700;
+  color: var(--pl); background: var(--tx); border: 0; border-radius: 22px; cursor: pointer;
+}
+#yes:hover { filter: brightness(1.15); }
+#bar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: color-mix(in srgb, var(--tx) 22%, transparent); }
+#bar i { display: block; height: 100%; width: 0; background: var(--tx); }
+
+@media (prefers-reduced-motion: reduce) {
+  #card { animation: none; opacity: 1; }
+  #card.out { animation: none; opacity: 0; }
+}
