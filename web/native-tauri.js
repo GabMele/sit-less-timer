@@ -19,6 +19,8 @@
     attention: () => w.requestUserAttention(2),
     setTheme: (bg) => { if (ok(bg)) w.setBackgroundColor(bg).catch(() => {}); },
     version: () => T.app.getVersion(),
+    // "Save as" dialog + write (Rust command); resolves true if saved, false if the user cancelled
+    saveFile: (name, content) => T.core.invoke('save_text_file', { name, content }),
     progress: (v, mode) => {
       if (v < 0) return w.setProgressBar({ status: 'none' });
       const status = mode === 'error' ? 'error' : mode === 'paused' ? 'paused' : 'normal';

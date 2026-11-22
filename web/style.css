@@ -1,6 +1,7 @@
 /* Themes: colors are variables. --accent and --warm are set by app.js (per-theme palette). */
 :root {
   --accent: #3fd0b8; --warm: #f2a65a; --blue: #6c8cc8;
+  --work: #a3e635; --rest: #9b84e6;   /* activity = lime, break = lavender, overtime = --warm (orange); overridden by app.js */
   --bg: #000; --fg: #cfd9d9; --fg-strong: #e6efef; --dim: #7c8a8a; --line: #2b3636; --line-hi: #4a5a5a;
   --hover: #151a1a; --surface: #0a0e0e; --field: #0d1111; --field-fg: #dfe8e8; --chip-fg: #aebcbc;
   --tile-bg: #070a0a; --tile-line: #1c2424; --bar-bg: #0b0f0f;
@@ -9,7 +10,7 @@
   color-scheme: dark;
 }
 :root[data-theme="light"] {
-  --blue: #3d5f9e;
+  --blue: #3d5f9e; --work: #5a9a0a; --rest: #6a4fc4;
   --bg: #f4f7f7; --fg: #2a3535; --fg-strong: #0f1a1a; --dim: #637171; --line: #cbd4d4; --line-hi: #9aa8a8;
   --hover: #e2e8e8; --surface: #ffffff; --field: #ffffff; --field-fg: #1a2626; --chip-fg: #3a4848;
   --tile-bg: #ffffff; --tile-line: #d5dddd; --bar-bg: #e1e8e8;
@@ -74,14 +75,15 @@ body {
 #tMain.over { color: var(--warm); }
 .lbl { font-size: max(8px, 2.6cqmin); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
 .lbl.over { color: var(--warm); }
+.parc { fill: none; stroke: var(--rest); stroke-width: 2.2; stroke-linecap: round; }
 #durRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .8cqmin; margin-top: 1.4cqmin; }
 .tick { stroke: var(--tick); stroke-width: .6; }
 .tick.maj { stroke: var(--tick-maj); stroke-width: 1.2; }
 .tick.top { stroke: var(--accent); stroke-width: 1.8; }
 .track { fill: none; stroke: var(--track); }
 .plan, .done, .over { fill: none; }
-.plan { stroke: color-mix(in srgb, var(--accent) var(--plan-pct), var(--bg)); }
-.done { stroke: var(--accent); }
+.plan { stroke: color-mix(in srgb, var(--work) var(--plan-pct), var(--bg)); }
+.done { stroke: var(--work); }
 .over { stroke: var(--warm); }
 .mark { stroke: var(--mark); stroke-width: 1.4; stroke-linecap: round; }
 .hand { stroke: var(--hand); stroke-width: 1.6; stroke-linecap: round; opacity: .85; }
@@ -89,11 +91,20 @@ body {
 body[data-status="paused"] #rings { opacity: .55; }
 body[data-status="idle"] .hand, body[data-status="idle"] .sec { display: none; }
 
+/* daily bar under the dial: first start of the day -> now, activity vs breaks */
+#day { flex: none; padding: 2px 22px 10px; }
+#day .tl { height: 12px; border-radius: 6px; background: none; border: 1px solid var(--line-hi); }
+#day .tlab { margin-top: 4px; }
+#day .tlab > span:nth-child(2) { display: flex; gap: 12px; }
+.k { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.k::before { content: ''; width: 8px; height: 8px; border-radius: 2px; background: var(--work); }
+.k.p::before { background: var(--rest); }
+
 #stage.pulse { animation: pulse 1.6s ease-out; }
 @keyframes pulse {
-  0% { filter: drop-shadow(0 0 0 rgba(242,166,90,0)); }
-  25% { filter: drop-shadow(0 0 16px rgba(242,166,90,.9)); }
-  100% { filter: drop-shadow(0 0 0 rgba(242,166,90,0)); }
+  0% { filter: drop-shadow(0 0 0 color-mix(in srgb, var(--warm) 0%, transparent)); }
+  25% { filter: drop-shadow(0 0 16px color-mix(in srgb, var(--warm) 90%, transparent)); }
+  100% { filter: drop-shadow(0 0 0 color-mix(in srgb, var(--warm) 0%, transparent)); }
 }
 
 /* controls */
@@ -142,12 +153,17 @@ input[type=range] { padding: 0; accent-color: var(--accent); }
 /* panels */
 .panel {
   display: none; position: absolute; left: 0; right: 0; bottom: 0; top: 32px;
-  background: var(--bg); padding: 6px 14px 14px; overflow: auto; z-index: 5;
+  /* content capped at 480px and centered; the panel itself stays full-width so the scrollbar sits at the window edge */
+  background: var(--bg); padding: 6px max(14px, calc((100% - 480px) / 2)) 14px; overflow: auto; z-index: 5;
 }
 .panel.open { display: block; }
+.sumHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .panel h2 { font-size: .92rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); margin: 4px 0 10px; }
 .panel label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 9px; color: var(--fg); }
 .panel label input[type=number] { width: 5.4em; text-align: center; }
+.panel label input.n3 { width: 3.6em; padding: 4px 2px; }
+input.n3::-webkit-inner-spin-button, input.n3::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=color] { width: 44px; height: 28px; padding: 2px; cursor: pointer; }
 .panel label input[type=text] { width: 8.5em; text-align: center; }
 .panel label input[type=range] { width: 8.5em; }
 .panel label.chk { justify-content: flex-start; }
@@ -168,21 +184,21 @@ input[type=range] { padding: 0; accent-color: var(--accent); }
 .tile span { display: block; font-size: .68rem; color: var(--dim); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile .tb { display: block; height: 4px; margin-top: 4px; background: var(--bar-bg); border-radius: 2px; overflow: hidden; }
 .tile .tb i { display: block; height: 100%; }
-.tile .tb i.a { background: var(--accent); }
-.tile .tb i.p { background: var(--blue); opacity: .7; }
+.tile .tb i.a { background: var(--work); }
+.tile .tb i.p { background: var(--rest); }
 .tile.a b { color: var(--accent); }
 .tile.p b { color: var(--blue); }
 .sub { font-size: .81rem; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin: 12px 0 6px; }
 .tl { position: relative; height: 18px; background: var(--bar-bg); border-radius: 5px; overflow: hidden; }
 .tl i { position: absolute; top: 0; bottom: 0; }
-.tl i.a { background: var(--accent); }
-.tl i.p { background: var(--blue); opacity: .6; }
+.tl i.a { background: var(--work); }
+.tl i.p { background: var(--rest); }
 .tlab { display: flex; justify-content: space-between; color: var(--dim); font-size: .81rem; margin-top: 3px; }
 .day { display: grid; grid-template-columns: 6.2em 1fr auto; gap: 8px; align-items: center; margin-bottom: 4px; font-size: .85rem; }
 .day > span { white-space: nowrap; font-variant-numeric: tabular-nums; text-transform: capitalize; }
 .day .bars { height: 8px; display: flex; background: var(--bar-bg); border-radius: 4px; overflow: hidden; }
-.day .bars i.a { background: var(--accent); }
-.day .bars i.p { background: var(--blue); opacity: .6; }
+.day .bars i.a { background: var(--work); }
+.day .bars i.p { background: var(--rest); }
 .day small { color: var(--dim); font-size: .8rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .empty { color: var(--dim); }
 

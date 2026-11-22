@@ -9,7 +9,8 @@ A minimalist analog timer for Windows that keeps you from sitting too long. One-
 - **Analog dial with rings.** One ring per hour; the planned duration is marked, the overtime turns warm-colored.
 - **Elapsed or remaining time.** Click the number to switch between count-up and countdown.
 - **Repeating alerts.** Choose the sound (32 synthesized sounds, including public-domain classical melodies, no audio files, plus one optional sound of your own: first 30 s with fade-out, stored locally), volume, number of repeats and interval.
-- **Activity summary.** Active time and breaks for today and the last 7 days. Breaks over 3 hours count as absence, not as a break.
+- **Breaks reset the cycle.** While paused, a break arc grows next to the dial; when you resume after 10 s or more, the dial restarts from zero (shorter pauses are ignored).
+- **Daily bar and summary.** A bar under the dial shows the whole day (activity and breaks, between the day start and end you set). The summary covers today and the last 7 days, history is kept up to 6 months, and you can export it as CSV.
 - **Taskbar progress** and window flashing when time is up.
 - **Compact window**, resizable, optional always-on-top and launch at Windows startup, remembers its position.
 - **Light / dark / system theme**, 6 accent colors, UI in English, Italian, French and Spanish.

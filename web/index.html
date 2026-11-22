@@ -30,14 +30,14 @@
 <div id="stage">
   <svg id="dial" viewBox="-104 -104 208 208" preserveAspectRatio="xMidYMid meet">
     <g id="ticks"></g>
+    <g id="pauseRing"></g>
     <g id="rings"></g>
   </svg>
   <a id="brand" class="ext" href="#" data-i18n-title="brand_title">nextquo.com</a>
   <div id="center">
     <div id="tTop" class="lbl"></div>
     <div id="tMain" data-i18n-title="title_mode"></div>
-    <div id="tBot" class="lbl"></div>
-    <div id="durRow">
+    <div id="tBot" class="lbl"></div>    <div id="durRow">
       <div id="chips"></div>
       <span id="durEdit" hidden>
         <button type="button" class="chip step" id="durDec" aria-label="-1 min" title="-1 min">−</button>
@@ -58,6 +58,10 @@
   </div>
 </div>
 
+<div id="day">
+  <div class="tl" id="dayTl"></div>
+  <div class="tlab"><span id="dayFrom"></span><span id="dayTot"></span><span id="dayTo"></span></div>
+</div>
 
 <section class="panel" id="pSet">
   <h2 data-i18n="set_h"></h2>
@@ -76,16 +80,24 @@
   </label>
   <p class="hint" id="customMsg" style="margin:-4px 0 9px" data-i18n="custom_hint"></p>
   <label><span data-i18n="vol"></span> <input id="sVol" type="range" min="0" max="1" step="0.05"></label>
-  <label><span data-i18n="reps"></span> <input id="sReps" type="number" min="1" max="99" step="1"></label>
-  <label><span data-i18n="every"></span> <input id="sEvery" type="number" min="0.5" max="60" step="0.5"></label>
-  <label><span data-i18n="presets"></span> <input id="sPresets" type="text" placeholder="25, 55"></label>
+  <label><span data-i18n="reps"></span> <input id="sReps" class="n3" type="number" min="1" max="999" step="1"></label>
+  <label><span data-i18n="every"></span> <input id="sEvery" class="n3" type="number" min="0.5" max="999" step="0.5"></label>
+  <label><span data-i18n="preset_a"></span> <input id="sPre1" class="n3" type="number" min="1" max="600" step="1"></label>
+  <label><span data-i18n="preset_b"></span> <input id="sPre2" class="n3" type="number" min="1" max="600" step="1"></label>
   <label class="chk"><input id="sTop" type="checkbox"> <span data-i18n="ontop"></span></label>
   <label class="chk" id="rowAuto" hidden><input id="sAuto" type="checkbox"> <span data-i18n="autostart"></span></label>
   <label><span data-i18n="mode"></span> <select id="sMode"></select></label>
   <label><span data-i18n="theme"></span> <select id="sTheme"></select></label>
   <label><span data-i18n="accent"></span> <span class="swatches" id="sAccent" role="radiogroup"></span></label>
+  <label><span data-i18n="col_work"></span> <input id="sColWork" type="color"></label>
+  <label><span data-i18n="col_rest"></span> <input id="sColRest" type="color"></label>
+  <label><span data-i18n="col_over"></span> <input id="sColOver" type="color"></label>
+  <div class="row" style="justify-content:flex-end;margin:-2px 0 9px"><button class="mini txt" id="sColReset" type="button" data-i18n="col_reset"></button></div>
   <label><span data-i18n="lang"></span> <select id="sLang"></select></label>
   <label><span data-i18n="keep"></span> <select id="sKeep"></select></label>
+  <label><span data-i18n="day_start"></span> <select id="sDayStart"></select></label>
+  <label><span data-i18n="day_end"></span> <select id="sDayEnd"></select></label>
+  <p class="hint" data-i18n="day_hint"></p>
   <p class="hint" data-i18n="hint"></p>
   <button class="danger" id="sClear" data-i18n="clear"></button>
 </section>
@@ -100,7 +112,10 @@
 </section>
 
 <section class="panel" id="pSum">
-  <h2 data-i18n="sum_h"></h2>
+  <div class="sumHead">
+    <h2 data-i18n="sum_h"></h2>
+    <button class="mini txt" id="sExport" type="button" data-i18n="export_csv"></button>
+  </div>
   <div id="sumBody"></div>
 </section>
 

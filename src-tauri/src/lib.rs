@@ -1,4 +1,5 @@
 use tauri::{LogicalSize, Manager};
+use tauri_plugin_dialog::DialogExt;
 
 // First-launch window size: 10% above the minimum (220x280).
 // The width/height in tauri.conf.json are not applied on Windows (the OS default size is used),
@@ -18,6 +19,24 @@ fn is_first_launch() -> bool {
     }
 }
 
+/// Asks the user where to save a text file and writes it there.
+/// Returns false if the user cancelled the dialog.
+#[tauri::command]
+async fn save_text_file(app: tauri::AppHandle, name: String, content: String) -> Result<bool, String> {
+    let Some(picked) = app
+        .dialog()
+        .file()
+        .add_filter("CSV", &["csv"])
+        .set_file_name(&name)
+        .blocking_save_file()
+    else {
+        return Ok(false);
+    };
+    let path = picked.into_path().map_err(|e| e.to_string())?;
+    std::fs::write(path, content.as_bytes()).map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let first_launch = is_first_launch();
@@ -30,6 +49,8 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![save_text_file])
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,

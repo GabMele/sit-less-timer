@@ -10,7 +10,7 @@
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
-  const DEF = { duration: 25, presets: [25, 55], sound: 'chimes', volume: 0.7, reps: 10, every: 3, onTop: false, keep: 30, theme: 'system', accent: 'teal', mode: 'up' };
+  const DEF = { duration: 25, presets: [25, 55], sound: 'chimes', volume: 0.7, reps: 10, every: 3, onTop: false, keep: 30, theme: 'system', accent: 'teal', mode: 'up', dayStart: 4, dayEnd: 4 };
   const S = { ...DEF, ...store.get('timer.settings', {}) };
   if (S.sound !== 'custom' && !Sounds.list.some((x) => x.id === S.sound)) S.sound = DEF.sound;   // sound removed in a previous version
   // migration: the old default presets (27, 52) become the new ones (25, 55)
@@ -27,18 +27,32 @@
     teal: ['#3fd0b8', '#0f8a76'], blue: ['#6ca0f0', '#2f5fb8'], violet: ['#a78bfa', '#6d4fd0'],
     pink: ['#f27aa8', '#c2336f'], orange: ['#f2a65a', '#b8590a'], green: ['#6fd16f', '#2a8a3a'],
   };
-  const WARM = ['#f2a65a', '#c4620a'];
+  // activity / break / overtime colors: [dark, light]; the user can override each one in the settings
+  const DEFAULT_COLORS = { work: ['#a3e635', '#5a9a0a'], rest: ['#9b84e6', '#6a4fc4'], over: ['#ff8a1f', '#d96a00'] };
+  const COLOR_VARS = { work: '--work', rest: '--rest', over: '--warm' };
+  const COLOR_INPUTS = { work: '#sColWork', rest: '#sColRest', over: '#sColOver' };
   const THEMES = ['system', 'light', 'dark'];
   if (!THEMES.includes(S.theme)) S.theme = 'system';
   if (!ACCENTS[S.accent]) S.accent = 'teal';
   if (S.mode !== 'up' && S.mode !== 'down') S.mode = 'up';
+  for (const k of ['dayStart', 'dayEnd']) S[k] = clamp(Math.round(Number(S[k])) || 0, 0, 23);
+  // exactly two quick durations (first / second)
+  if (!Array.isArray(S.presets)) S.presets = DEF.presets;
+  S.presets = [0, 1].map((i) => clamp(Math.round(Number(S.presets[i])) || DEF.presets[i], 1, 600));
+  S.reps = clamp(Math.round(Number(S.reps)) || DEF.reps, 1, 999);
+  S.every = clamp(Number(S.every) || DEF.every, 0.5, 999);
+  S.colors = { work: null, rest: null, over: null, ...(S.colors && typeof S.colors === 'object' ? S.colors : {}) };
   const darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
   function applyTheme() {
     const light = S.theme === 'light' || (S.theme === 'system' && !darkMQ.matches);
     const i = light ? 1 : 0, r = document.documentElement;
     r.dataset.theme = light ? 'light' : 'dark';
     r.style.setProperty('--accent', ACCENTS[S.accent][i]);
-    r.style.setProperty('--warm', WARM[i]);
+    for (const k in COLOR_VARS) {
+      const c = S.colors[k] || DEFAULT_COLORS[k][i];
+      r.style.setProperty(COLOR_VARS[k], c);
+      const inp = $(COLOR_INPUTS[k]); if (inp) inp.value = c;
+    }
     const cs = getComputedStyle(r);
     native.setTheme(cs.getPropertyValue('--bg').trim(), cs.getPropertyValue('--dim').trim());
     document.querySelectorAll('.sw').forEach((b) => {
@@ -66,10 +80,14 @@
 
   function start() {
     if (status === 'running') return;
-    if (status === 'idle') { acc = 0; alertIdx = 0; }
+    // starting from idle or resuming after a real break begins a new cycle: dial back to zero.
+    // A break shorter than MIN_BREAK is accidental: it is ignored and the cycle just continues.
+    let merged = false;
+    if (status === 'paused' && breakMs() < MIN_BREAK) merged = mergeShortBreak();
+    else if (status === 'idle' || status === 'paused') { acc = 0; alertIdx = 0; }
     startedAt = Date.now();
     setStatus('running');
-    seg('a');
+    if (!merged) seg('a');
     tick();
   }
   function pause() {
@@ -88,14 +106,25 @@
   }
 
   /* ---------- activity / break log ---------- */
-  const MAX_PAUSE = 3 * 3600e3;   // breaks over 3h count as absence, not as a break
+  const MIN_BREAK = 10000;   // breaks shorter than 10 s are accidental and do not count
   let L = store.get('timer.log', { segs: [], open: null, hb: 0 });
+  // undo a too-short break: reopen the activity segment it interrupted, as if it never happened
+  function mergeShortBreak() {
+    const o = L.open;
+    if (!o || o.t !== 'p') return false;
+    const prev = L.segs[L.segs.length - 1];
+    if (!prev || prev.t !== 'a' || prev.e !== o.s) return false;
+    L.segs.pop();
+    L.open = { t: 'a', s: prev.s };
+    saveLog();
+    return true;
+  }
   function closeOpen(end) {
     const o = L.open; L.open = null;
     if (!o) return;
     const d = end - o.s;
     if (d < 1000) return;
-    if (o.t === 'p' && d > MAX_PAUSE) return;
+    if (o.t === 'p' && d < MIN_BREAK) return;
     L.segs.push({ t: o.t, s: o.s, e: end });
   }
   function seg(type) {
@@ -113,19 +142,27 @@
   if (L.open) closeOpen(clamp(L.hb || Date.now(), L.open.s, Date.now()));
   saveLog();
 
+  // a "day" starts at the configured start hour and lasts 24 h (so activity after the end hour is not lost)
   function dayBounds(off) {
-    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - off);
+    const d = new Date(); d.setHours(S.dayStart, 0, 0, 0);
+    if (d.getTime() > Date.now()) d.setDate(d.getDate() - 1);
+    d.setDate(d.getDate() - off);
     const e = new Date(d); e.setDate(e.getDate() + 1);
     return [d.getTime(), e.getTime()];
   }
   function daySegs(off) {
     const [ds, de] = dayBounds(off);
     const all = L.segs.slice();
-    if (L.open) {
-      const e = L.open.t === 'p' ? Math.min(Date.now(), L.open.s + MAX_PAUSE) : Date.now();
-      all.push({ t: L.open.t, s: L.open.s, e });
-    }
-    return all.map((x) => ({ t: x.t, s: Math.max(x.s, ds), e: Math.min(x.e, de) })).filter((x) => x.e > x.s);
+    if (L.open) all.push({ t: L.open.t, s: L.open.s, e: Date.now() });
+    const r = all.map((x) => ({ t: x.t, s: Math.max(x.s, ds), e: Math.min(x.e, de) })).filter((x) => x.e > x.s);
+    // breaks count only between the first start and the last activity of the day, whatever their length;
+    // the break in progress counts live while the timer is paused
+    const first = r.findIndex((x) => x.t === 'a');
+    if (first < 0) return [];
+    let last = r.length - 1;
+    while (r[last].t !== 'a') last--;
+    const live = off === 0 && status === 'paused' && L.open && L.open.t === 'p';
+    return r.slice(first, live ? r.length : last + 1);
   }
   function stats(off) {
     const segs = daySegs(off);
@@ -205,6 +242,49 @@
     if (out !== lastRings) { ringsG.innerHTML = out; lastRings = out; }
   }
 
+  // length of the break in progress (0 unless paused); resets when the timer resumes or stops
+  const breakMs = () => (status === 'paused' && L.open && L.open.t === 'p' ? Date.now() - L.open.s : 0);
+  const breakShown = () => { const b = breakMs(); return b >= MIN_BREAK ? b : 0; };
+
+  // current break: thin arc attached to the outer work ring, one lap per hour
+  const pauseG = $('#pauseRing');
+  let lastPauseRing = '';
+  function drawPause(ms) {
+    // flush against the outer work ring (its outer edge is at r=86); only the real break sector is drawn
+    const m = ms / 60000, R = 86 + 1.1, rem = m % 60;
+    let out = '';
+    if (ms >= 1000 && rem > 0.0005) out = `<path class="parc" d="${arcPath(R, 0, rem * 6)}"/>`;
+    else if (ms >= 1000) out = `<circle class="parc" r="${R}"/>`;
+    if (out !== lastPauseRing) { pauseG.innerHTML = out; lastPauseRing = out; }
+  }
+
+  // daily bar: fixed scale from the configured day start to day end (an end equal to or before the start means the
+  // next day; activity past the end stretches the scale to its hour); empty until the first start
+  const dayTl = $('#dayTl'), dayFrom = $('#dayFrom'), dayTot = $('#dayTot'), dayTo = $('#dayTo');
+  let lastDay = '', lastDaySec = 0;
+  function drawDay() {
+    const sec = Math.floor(Date.now() / 1000);
+    if (sec === lastDaySec) return;
+    lastDaySec = sec;
+    const st = stats(0);
+    const [ds, de] = dayBounds(0);
+    const t0 = ds;
+    let t1 = ds + (((S.dayEnd - S.dayStart + 24) % 24) || 24) * 3600e3;
+    const lastEnd = st.segs.length ? st.segs[st.segs.length - 1].e : 0;
+    if (lastEnd > t1) { const d = new Date(lastEnd); d.setMinutes(0, 0, 0); t1 = Math.min(d.getTime() + 3600e3, de); }
+    const span = t1 - t0;
+    let tl = '', tot = '';
+    if (st.segs.length) {
+      tl = st.segs.map((x) => `<i class="${x.t}" style="left:${((x.s - t0) / span) * 100}%;width:${Math.max(((x.e - x.s) / span) * 100, 0.3)}%"></i>`).join('');
+      tot = `<span class="k a">${fmtDur(st.a)}</span><span class="k p">${fmtDur(st.p)}</span>`;
+    }
+    const from = hhmm(t0), to = hhmm(t1);
+    const key = tl + '|' + from + '|' + to + '|' + tot;
+    if (key === lastDay) return;
+    lastDay = key;
+    dayTl.innerHTML = tl; dayFrom.textContent = from; dayTo.textContent = to; dayTot.innerHTML = tot;
+  }
+
   function fmtClock(ms) {
     const s = Math.floor(ms / 1000);
     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
@@ -216,6 +296,8 @@
   let lastProg = '';
   function render(el) {
     drawRings(el);
+    drawPause(breakShown());
+    drawDay();
     const T = targetMs(), over = el >= T;
     const down = S.mode === 'down';
     const txt = down
@@ -262,8 +344,9 @@
         due++;
       }
       if (due) fire();
-      if (Date.now() - lastHb > 5000) { lastHb = Date.now(); saveLog(); }
     }
+    // heartbeat also while paused/stopped, so a break in progress survives an app restart
+    if (status !== 'idle' && Date.now() - lastHb > 5000) { lastHb = Date.now(); saveLog(); }
     render(el);
   }
   setInterval(tick, 200);
@@ -440,7 +523,8 @@
   $('#sVol').value = S.volume;
   $('#sReps').value = S.reps;
   $('#sEvery').value = S.every;
-  $('#sPresets').value = S.presets.join(', ');
+  $('#sPre1').value = S.presets[0];
+  $('#sPre2').value = S.presets[1];
   $('#sTop').checked = !!S.onTop;
   native.setOnTop(S.onTop);
   // launch at login: only in the desktop app, and the checkbox mirrors the real OS state
@@ -463,30 +547,57 @@
   };
   sPlay.addEventListener('click', () => { if (Sounds.playing) Sounds.stop(); else Sounds.play(S.sound, S.volume); });
   $('#sVol').addEventListener('change', () => { S.volume = Number($('#sVol').value); saveS(); Sounds.play(S.sound, S.volume); });
+  // numeric fields accept at most 3 integer digits (registered before the handlers below, so they see the trimmed value)
+  const limitDigits = (el, n = 3) => el.addEventListener('input', () => {
+    const [i, f] = el.value.split('.');
+    if (i.length > n) el.value = i.slice(0, n) + (f !== undefined ? '.' + f : '');
+  });
+  for (const el of [$('#sReps'), $('#sEvery'), $('#sPre1'), $('#sPre2'), durIn]) limitDigits(el);
   $('#sReps').addEventListener('input', () => {
     const v = Math.round(Number($('#sReps').value));
-    if (v >= 1) { S.reps = clamp(v, 1, 99); saveS(); syncAlertIdx(); }
+    if (v >= 1) { S.reps = clamp(v, 1, 999); saveS(); syncAlertIdx(); }
   });
   $('#sEvery').addEventListener('input', () => {
     const v = Number($('#sEvery').value);
-    if (v >= 0.5) { S.every = clamp(v, 0.5, 60); saveS(); syncAlertIdx(); }
+    if (v >= 0.5) { S.every = clamp(v, 0.5, 999); saveS(); syncAlertIdx(); }
   });
-  $('#sPresets').addEventListener('change', () => {
-    const list = [...new Set($('#sPresets').value.split(/[^0-9]+/).map(Number).filter((n) => n >= 1 && n <= 600))].slice(0, 5);
-    S.presets = list.length ? list : DEF.presets;
-    $('#sPresets').value = S.presets.join(', ');
-    saveS(); buildChips();
+  [$('#sPre1'), $('#sPre2')].forEach((el, idx) => {
+    el.addEventListener('input', () => {
+      const v = Math.round(Number(el.value));
+      if (v >= 1) { S.presets[idx] = clamp(v, 1, 600); saveS(); buildChips(); }
+    });
+    el.addEventListener('change', () => { el.value = S.presets[idx]; });   // restore a valid value if left empty / out of range
   });
+  for (const k in COLOR_INPUTS) {
+    $(COLOR_INPUTS[k]).addEventListener('input', (e) => { S.colors[k] = e.target.value; saveS(); applyTheme(); });
+  }
+  $('#sColReset').addEventListener('click', () => { S.colors = { work: null, rest: null, over: null }; saveS(); applyTheme(); });
   const sKeep = $('#sKeep');
   function buildKeepOptions() {
     sKeep.innerHTML = '';
-    for (const d of [7, 15, 30, 90]) {
-      const o = document.createElement('option'); o.value = d; o.textContent = t('days', d); sKeep.appendChild(o);
+    // values are days; shown as days up to 15 and as months from 30 (30 d = 1 month, 90 d = 3, 180 d = 6)
+    for (const d of [7, 15, 30, 90, 180]) {
+      const o = document.createElement('option'); o.value = d;
+      o.textContent = d < 30 ? t('days', d) : d === 30 ? t('month_1') : t('months', d / 30);
+      sKeep.appendChild(o);
     }
     sKeep.value = S.keep;
   }
   buildKeepOptions();
   sKeep.addEventListener('change', () => { S.keep = Number(sKeep.value); saveS(); saveLog(); refreshToday(); });
+  const sDayStart = $('#sDayStart'), sDayEnd = $('#sDayEnd');
+  for (const sel of [sDayStart, sDayEnd]) {
+    for (let h = 0; h < 24; h++) {
+      const o = document.createElement('option'); o.value = h; o.textContent = String(h).padStart(2, '0') + ':00'; sel.appendChild(o);
+    }
+  }
+  sDayStart.value = S.dayStart; sDayEnd.value = S.dayEnd;
+  const onDayChange = () => {
+    S.dayStart = Number(sDayStart.value); S.dayEnd = Number(sDayEnd.value);
+    saveS(); lastDay = ''; lastDaySec = 0; refreshToday(); tick();
+  };
+  sDayStart.addEventListener('change', onDayChange);
+  sDayEnd.addEventListener('change', onDayChange);
   $('#sClear').addEventListener('click', () => {
     if (!confirm(t('clear_q'))) return;
     L.segs = [];
@@ -532,6 +643,39 @@
     $('#sumBody').innerHTML = h;
   }
   setInterval(() => { if (pSum.classList.contains('open')) renderSummary(); }, 5000);
+
+  /* ---------- CSV export ---------- */
+  const p2 = (n) => String(n).padStart(2, '0');
+  const ymd = (d) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+  const hms = (ms) => { const d = new Date(ms); return `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; };
+  // one row per activity / break over the whole kept history; "day" follows the configured day start.
+  // English uses "," and "."; the other languages use ";" and a decimal comma (what their Excel expects)
+  function buildCsv() {
+    const en = S.lang === 'en', sep = en ? ',' : ';';
+    const q = (v) => { v = String(v); return v.includes(sep) || /["\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    const rows = [[t('csv_day'), t('csv_start'), t('csv_end'), t('csv_type'), t('csv_min')]];
+    for (let off = S.keep; off >= 0; off--) {
+      const day = ymd(new Date(dayBounds(off)[0]));
+      for (const x of daySegs(off)) {
+        const m = ((x.e - x.s) / 60000).toFixed(1);
+        rows.push([day, hms(x.s), hms(x.e), t(x.t === 'a' ? 'act' : 'brk'), en ? m : m.replace('.', ',')]);
+      }
+    }
+    return '﻿' + rows.map((r) => r.map(q).join(sep)).join('\r\n') + '\r\n';
+  }
+  $('#sExport').addEventListener('click', async () => {
+    const name = `sit-less-timer-${ymd(new Date())}.csv`, csv = buildCsv();
+    try {
+      if (window.native && native.saveFile) {
+        await native.saveFile(name, csv);   // desktop app: "Save as" dialog
+      } else {
+        const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+        const a = document.createElement('a'); a.href = url; a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    } catch { alert(t('export_err')); }
+  });
 
   window.addEventListener('beforeunload', saveLog);
 
