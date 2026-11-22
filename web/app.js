@@ -262,6 +262,25 @@
   // next day; activity past the end stretches the scale to its hour); empty until the first start
   const dayTl = $('#dayTl'), dayFrom = $('#dayFrom'), dayTot = $('#dayTot'), dayTo = $('#dayTo');
   let lastDay = '', lastDaySec = 0;
+  let dayView = { t0: 0, span: 1, segs: [] }; // scale of the bar as last drawn, used by the hover hint
+
+  // hover hint: time under the cursor, or the start-end of the segment under it
+  const dayTip = document.createElement('div');
+  dayTip.id = 'dayTip';
+  document.body.appendChild(dayTip);
+  dayTl.addEventListener('mousemove', (e) => {
+    const r = dayTl.getBoundingClientRect();
+    const at = dayView.t0 + ((e.clientX - r.left) / r.width) * dayView.span;
+    const seg = dayView.segs.find((x) => at >= x.s && at <= x.e);
+    dayTip.textContent = seg ? `${hhmm(seg.s)} – ${hhmm(seg.e)} · ${fmtDur(seg.e - seg.s)}` : hhmm(at);
+    dayTip.className = seg ? seg.t : '';
+    dayTip.style.display = 'block';
+    const w = dayTip.offsetWidth;
+    dayTip.style.left = Math.max(4, Math.min(e.clientX - w / 2, window.innerWidth - w - 4)) + 'px';
+    dayTip.style.top = (r.top - dayTip.offsetHeight - 6) + 'px';
+  });
+  dayTl.addEventListener('mouseleave', () => { dayTip.style.display = 'none'; });
+
   function drawDay() {
     const sec = Math.floor(Date.now() / 1000);
     if (sec === lastDaySec) return;
@@ -273,6 +292,7 @@
     const lastEnd = st.segs.length ? st.segs[st.segs.length - 1].e : 0;
     if (lastEnd > t1) { const d = new Date(lastEnd); d.setMinutes(0, 0, 0); t1 = Math.min(d.getTime() + 3600e3, de); }
     const span = t1 - t0;
+    dayView = { t0, span, segs: st.segs };
     let tl = '', tot = '';
     if (st.segs.length) {
       tl = st.segs.map((x) => `<i class="${x.t}" style="left:${((x.s - t0) / span) * 100}%;width:${Math.max(((x.e - x.s) / span) * 100, 0.3)}%"></i>`).join('');

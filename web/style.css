@@ -95,6 +95,7 @@ body[data-status="idle"] .hand, body[data-status="idle"] .sec { display: none; }
 #day { flex: none; padding: 2px 22px 10px; }
 #day .tl { height: 12px; border-radius: 6px; background: none; border: 1px solid var(--line-hi); }
 #day .tlab { margin-top: 4px; }
+#dayTip { position: fixed; display: none; z-index: 50; pointer-events: none; padding: 3px 8px; border-radius: 6px; font-size: .81rem; white-space: nowrap; font-variant-numeric: tabular-nums; background: var(--surface); color: var(--fg-strong); border: 1px solid var(--line-hi); }
 #day .tlab > span:nth-child(2) { display: flex; gap: 12px; }
 .k { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
 .k::before { content: ''; width: 8px; height: 8px; border-radius: 2px; background: var(--work); }
