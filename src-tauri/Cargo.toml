@@ -1,6 +1,6 @@
 [package]
 name = "timer"
-version = "1.3.0"
+version = "1.4.0"
 description = "Timer analogico per non stare troppo seduti"
 authors = ["Gabriele Melendugno"]
 edition = "2021"
