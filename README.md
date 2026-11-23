@@ -64,7 +64,7 @@ npm run build    # release build + NSIS installer in src-tauri/target/release/bu
 
 ## About this project
 
-Conceived, designed and directed by Gabriele Melendugno; developed with [Claude Code](https://claude.com/claude-code) (AI-assisted). The product decisions, testing and release are mine; most of the code was written by the assistant under my direction.
+Conceived, designed and directed by Gabriele Melendugno; developed with [Claude Code](https://claude.com/claude-code) (AI-assisted). The product decisions, testing and release are mine; all the code was written by the assistant under my direction.
 
 Made by [nextquo.com](https://nextquo.com), which builds custom websites and apps.
 
