@@ -1,20 +1,31 @@
 # Sit-less Timer
 
-A minimalist analog timer for Windows that keeps you from sitting too long. One-hour dial with concentric rings: if you don't stop it, it keeps counting and adds a ring for every extra hour, while gentle sounds repeat until you get up.
+A minimalist analog timer for Windows that tracks your sitting time automatically and reminds you to get up. It notices when you step away, counts that time as a break and restarts when you're back.
 
 **Free, no account, no ads, no data collection.** Everything stays on your device.
 
 ## Features
 
-- **Analog dial with rings.** One ring per hour; the planned duration is marked, the overtime turns warm-colored.
-- **Elapsed or remaining time.** Click the number to switch between count-up and countdown.
-- **Repeating alerts.** Choose the sound (32 synthesized sounds, including public-domain classical melodies, no audio files, plus one optional sound of your own: first 30 s with fade-out, stored locally), volume, number of repeats and interval.
-- **Breaks reset the cycle.** While paused, a break arc grows next to the dial; when you resume after 10 s or more, the dial restarts from zero (shorter pauses are ignored).
-- **Notices when you step away.** If you stop touching the keyboard and mouse for a few minutes (5 by default), an *Are you still there?* card appears on every monitor, small at first and then bigger, with a countdown. Move the mouse and it goes away; otherwise the timer pauses and the minutes you were away are not counted as sitting. Colors (two-color gradient), position on screen and a gentle sound are configurable, and the timer can restart by itself when you come back. It only reads *how long it has been* since the last input, never what you type.
+**Automatic tracking**
+- **Notices when you step away.** If you stop touching the keyboard and mouse for a few minutes (5 by default), an *Are you still there?* card appears on every monitor, small at first and then bigger, with a countdown. Move the mouse and it goes away; otherwise the timer pauses and the minutes you were away count as a break, not as sitting. When you come back, the first input restarts the timer by itself (optional for manual pauses too). It only reads *how long it has been* since the last input, never what you type.
+- **Breaks reset the cycle.** While paused, a break arc grows next to the dial and the dial shows how long the break has lasted, with a Resume button; resuming after 10 s or more restarts the dial from zero (shorter pauses are ignored).
+
+**Analog dial**
+- **Readable at a glance.** The analog dial shows how long you've been sitting without having to read digits.
+- **Rings.** One ring per hour; the goal is marked with a triangle and a tick, overtime turns warm-colored.
+- **Elapsed or remaining time.** Click the number to switch between count-up and countdown. Quick durations (25′, 55′ or your own).
+
+**Reminders**
+- **Repeating alerts.** 32 synthesized sounds (including public-domain classical melodies, no audio files) plus one optional sound of your own (first 30 s with fade-out, stored locally); volume, number of repeats and interval are adjustable.
+
+**Always-visible stats**
 - **Daily bar and summary.** A bar under the dial shows the whole day (activity and breaks, between the day start and end you set). The summary covers today and the last 7 days, history is kept up to 6 months, and you can export it as CSV.
-- **Taskbar progress** and window flashing when time is up.
-- **Compact window**, resizable, optional always-on-top and launch at Windows startup, remembers its position.
-- **Light / dark / system theme**, 6 accent colors, UI in English, Italian, French and Spanish.
+
+**Customization**
+- Colors for work, break and overtime; light / dark / system theme and 6 accent colors; *Are you still there?* card position, two-color gradient and optional soft sound (with a test button); UI in English, Italian, French and Spanish.
+
+**Window**
+- Compact and resizable, optional always-on-top and launch at Windows startup, remembers its position, taskbar progress and window flashing when time is up.
 
 ## Install
 
