@@ -46,7 +46,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('wc').hidden = false;
     document.getElementById('wMin').addEventListener('click', () => w.minimize());
-    document.getElementById('wMax').addEventListener('click', () => w.toggleMaximize());
     document.getElementById('wClose').addEventListener('click', () => w.close());
 
     // resize grip in the bottom-right corner; it pulses for ~3 s on the very first launch

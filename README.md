@@ -49,8 +49,8 @@ The first version was built with Electron (tag [`electron-v1.0.0`](../../release
 
 Design notes:
 - Time is computed from `Date.now()` rather than counting ticks, so it stays correct after sleep or throttling. After a long sleep only one alert is played, not all the missed ones.
-- The window is frameless with a custom title bar; the destructive "close" button is small and separated from the frequent controls.
-- Security: strict CSP, no remote content, external links limited to an allow-list (nextquo.com, ko-fi.com), minimal Tauri capabilities.
+- The window is frameless with a custom title bar; only Minimize and Close are shown (maximize is pointless for a small timer), so the title bar stays free for the frequent controls; Close is set apart from Minimize to avoid accidental clicks.
+- Security: restrictive CSP (Content Security Policy: a list of what the app is allowed to load and connect to, here only its own files, so no remote scripts and no way to send data out), no remote content, external links limited to an allow-list (nextquo.com, ko-fi.com), minimal Tauri capabilities.
 
 ## Develop
 
