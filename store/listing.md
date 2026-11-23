@@ -30,6 +30,7 @@ Realizzato da nextquo.com, che crea siti e app su misura.
 • Durante una pausa il quadrante mostra da quanto dura, con il pulsante Riprendi.
 • Il segnalino dell'obiettivo si vede meglio: un triangolo che punta alla tacca del quadrante, accanto al segno sull'anello.
 • Finestra più compatta (circa 10% in meno) e barra del titolo più sottile.
+• Backup e ripristino: salva statistiche e impostazioni in un file e ripristinale su un altro PC o dopo una reinstallazione.
 • Privacy: il controllo di inattività legge solo da quanto tempo non c'è input, mai cosa scrivi.
 
 **Parole chiave:** timer, pausa, seduto, sedentarietà, pomodoro, focus, promemoria, analogico
@@ -60,6 +61,7 @@ Made by nextquo.com, which builds custom websites and apps.
 • During a break the dial shows how long it has lasted, with a Resume button.
 • Easier-to-see goal marker: a triangle pointing at the dial tick, next to the line across the ring.
 • More compact window (about 10% smaller) and a tighter title bar.
+• Backup and restore: save your statistics and settings to a file and restore them on another PC or after a reinstall.
 • Privacy: the inactivity check only reads how long it has been since the last input, never what you type.
 
 **Keywords:** timer, break, sitting, sedentary, pomodoro, focus, reminder, analog
@@ -90,6 +92,7 @@ Réalisé par nextquo.com, qui crée des sites web et des applications sur mesur
 • Pendant une pause, le cadran indique sa durée, avec un bouton Reprendre.
 • Repère d'objectif plus visible : un triangle pointant vers la graduation du cadran, à côté du trait sur l'anneau.
 • Fenêtre plus compacte (environ 10 % de moins) et barre de titre plus fine.
+• Sauvegarde et restauration : enregistrez vos statistiques et réglages dans un fichier et restaurez-les sur un autre PC ou après une réinstallation.
 • Confidentialité : la détection d'inactivité lit seulement le temps écoulé depuis la dernière saisie, jamais ce que vous tapez.
 
 **Mots-clés :** minuteur, pause, assis, sédentarité, pomodoro, concentration, rappel, analogique
@@ -120,15 +123,19 @@ Creado por nextquo.com, que desarrolla sitios web y apps a medida.
 • Durante un descanso, la esfera muestra cuánto dura, con un botón Reanudar.
 • Marcador de objetivo más visible: un triángulo que apunta a la marca de la esfera, junto a la línea sobre el anillo.
 • Ventana más compacta (un 10 % menos) y barra de título más fina.
+• Copia de seguridad y restauración: guarda tus estadísticas y ajustes en un archivo y restáuralos en otro PC o tras reinstalar.
 • Privacidad: la detección de inactividad solo lee cuánto tiempo pasó desde la última entrada, nunca lo que escribes.
 
 **Palabras clave:** temporizador, pausa, sentado, sedentarismo, pomodoro, concentración, recordatorio, analógico
 
 ---
 
-## Screenshot consigliati (1366×768 o più)
-1. Timer in corso (anello verde) — finestra media.
-2. Timer in "oltre il tempo" con 2 anelli (verde + arancione).
-3. Impostazioni con la lista suoni.
-4. Riepilogo di oggi.
-5. Finestra piccola per mostrare quanto è compatto.
+## Screenshot (1920×1080, in `store/screenshots/en/`)
+1. Timer in corso con barra della giornata e segnalino dell'obiettivo.
+2. Oltre il tempo: anello arancione sopra il primo.
+3. Riepilogo di oggi e degli ultimi 7 giorni.
+4. Card «Ci sei ancora?».
+5. Impostazioni: card, colori, tema.
+6. Impostazioni: suono, ripetizioni, durate.
+7. Tema chiaro.
+8. Finestra compatta.
