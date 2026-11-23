@@ -21,14 +21,15 @@ fn is_first_launch() -> bool {
     }
 }
 
-/// Asks the user where to save a text file and writes it there.
+/// Asks the user where to save a text file and writes it there (the filter follows the file extension).
 /// Returns false if the user cancelled the dialog.
 #[tauri::command]
 async fn save_text_file(app: tauri::AppHandle, name: String, content: String) -> Result<bool, String> {
+    let ext = name.rsplit('.').next().unwrap_or("txt").to_lowercase();
     let Some(picked) = app
         .dialog()
         .file()
-        .add_filter("CSV", &["csv"])
+        .add_filter(ext.to_uppercase(), &[ext.as_str()])
         .set_file_name(&name)
         .blocking_save_file()
     else {
@@ -37,6 +38,19 @@ async fn save_text_file(app: tauri::AppHandle, name: String, content: String) ->
     let path = picked.into_path().map_err(|e| e.to_string())?;
     std::fs::write(path, content.as_bytes()).map_err(|e| e.to_string())?;
     Ok(true)
+}
+
+/// Asks the user for a JSON file and returns its text (None if cancelled). Capped at 20 MB.
+#[tauri::command]
+async fn open_text_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let Some(picked) = app.dialog().file().add_filter("JSON", &["json"]).blocking_pick_file() else {
+        return Ok(None);
+    };
+    let path = picked.into_path().map_err(|e| e.to_string())?;
+    if std::fs::metadata(&path).map_err(|e| e.to_string())?.len() > 20 * 1024 * 1024 {
+        return Err("file too large".into());
+    }
+    std::fs::read_to_string(path).map(Some).map_err(|e| e.to_string())
 }
 
 /// Milliseconds since the last keyboard/mouse input anywhere in the system (Windows only).
@@ -213,7 +227,7 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![save_text_file, idle_ms, show_idle_prompt, hide_idle_prompt])
+        .invoke_handler(tauri::generate_handler![save_text_file, open_text_file, idle_ms, show_idle_prompt, hide_idle_prompt])
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,

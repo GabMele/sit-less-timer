@@ -19,7 +19,7 @@ A minimalist analog timer for Windows that tracks your sitting time automaticall
 - **Repeating alerts.** 32 synthesized sounds (including public-domain classical melodies, no audio files) plus one optional sound of your own (first 30 s with fade-out, stored locally); volume, number of repeats and interval are adjustable.
 
 **Always-visible stats**
-- **Daily bar and summary.** A bar under the dial shows the whole day (activity and breaks, between the day start and end you set). The summary covers today and the last 7 days, history is kept up to 6 months, and you can export it as CSV.
+- **Daily bar and summary.** A bar under the dial shows the whole day (activity and breaks, between the day start and end you set). The summary covers today and the last 7 days, history is kept up to 6 months, and you can export it as CSV. A backup file (statistics + settings) lets you move to another PC or reinstall without losing history.
 
 **Customization**
 - Colors for work, break and overtime; light / dark / system theme and 6 accent colors; *Are you still there?* card position, two-color gradient and optional soft sound (with a test button); UI in English, Italian, French and Spanish.

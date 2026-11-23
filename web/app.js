@@ -860,6 +860,56 @@
     } catch { alert(t('export_err')); }
   });
 
+  /* ---------- backup / restore (JSON: statistics + settings; the custom sound is not included) ---------- */
+  const BACKUP_APP = 'sit-less-timer';
+  async function saveText(name, text, mime) {
+    if (window.native && native.saveFile) return native.saveFile(name, text);
+    const url = URL.createObjectURL(new Blob([text], { type: mime }));
+    const a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
+  }
+  function pickText() {
+    if (window.native && native.openFile) return native.openFile();
+    return new Promise((resolve) => {
+      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+      inp.addEventListener('change', () => { const f = inp.files[0]; f ? f.text().then(resolve) : resolve(null); });
+      inp.click();
+    });
+  }
+  $('#sBackup').addEventListener('click', async () => {
+    saveLog();
+    const data = { app: BACKUP_APP, version: 1, exported: new Date().toISOString(), settings: S, segs: L.segs };
+    try { await saveText(`sit-less-timer-backup-${ymd(new Date())}.json`, JSON.stringify(data), 'application/json'); }
+    catch { alert(t('export_err')); }
+  });
+  $('#sRestore').addEventListener('click', async () => {
+    let data;
+    try {
+      const text = await pickText();
+      if (text == null) return;
+      data = JSON.parse(text);
+      if (!data || data.app !== BACKUP_APP || !Array.isArray(data.segs) || typeof data.settings !== 'object') throw new Error('format');
+    } catch { alert(t('restore_err')); return; }
+    if (!confirm(t('restore_q'))) return;
+    // statistics: merge, skipping duplicates and malformed rows; settings: only known keys
+    const key = (x) => `${x.t}|${x.s}|${x.e}`;
+    const have = new Set(L.segs.map(key));
+    for (const x of data.segs) {
+      if (x && (x.t === 'a' || x.t === 'p') && Number.isFinite(x.s) && Number.isFinite(x.e) && x.e > x.s && !have.has(key(x))) {
+        L.segs.push({ t: x.t, s: x.s, e: x.e }); have.add(key(x));
+      }
+    }
+    L.segs.sort((a, b) => a.s - b.s);
+    const allowed = new Set([...Object.keys(S), 'lang', 'colors', 'promptColors']);
+    for (const k of Object.keys(data.settings)) if (allowed.has(k)) S[k] = data.settings[k];
+    if (!I18N.LANGS[S.lang]) S.lang = I18N.detect();
+    saveS(); saveLog();
+    alert(t('restore_ok'));
+    location.reload();
+  });
+
   window.addEventListener('beforeunload', saveLog);
 
   document.querySelectorAll('.ext').forEach((a) => a.addEventListener('click', (e) => {

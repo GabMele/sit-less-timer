@@ -22,6 +22,8 @@
     version: () => T.app.getVersion(),
     // "Save as" dialog + write (Rust command); resolves true if saved, false if the user cancelled
     saveFile: (name, content) => T.core.invoke('save_text_file', { name, content }),
+    // "Open" dialog for a JSON file (Rust command); resolves its text, or null if the user cancelled
+    openFile: () => T.core.invoke('open_text_file'),
     // ms since the last keyboard/mouse input system-wide (null if unavailable)
     idleMs: () => T.core.invoke('idle_ms'),
     // "Are you still there?" cards on every monitor (o: {seconds, end, lang, bg, fg, accent, warm}); the answer arrives as an event
