@@ -24,7 +24,14 @@ Un timer analogico, nero e minimale, per non stare seduto troppo a lungo.
 
 Realizzato da nextquo.com, che crea siti e app su misura.
 
-**Novità:** Prima versione.
+**Novità:**
+• «Ci sei ancora?»: se ti allontani dal PC (nessun input da tastiera o mouse per alcuni minuti, 5 di default, configurabile) compare una card su ogni monitor, prima piccola poi più grande, con un conto alla rovescia. Muovi il mouse e sparisce; altrimenti il timer va in pausa e il tempo di assenza conta come pausa, non come seduta.
+• Quando torni, il primo input da tastiera o mouse riavvia il timer come nuovo ciclo di lavoro (opzionale anche per le pause manuali).
+• Card personalizzabile: posizione sullo schermo, sfumatura a due colori e suono delicato opzionale, con pulsante di prova.
+• Durante una pausa il quadrante mostra da quanto dura, con il pulsante Riprendi.
+• Il segnalino dell'obiettivo si vede meglio: un triangolo che punta alla tacca del quadrante, accanto al segno sull'anello.
+• Finestra più compatta (circa 10% in meno) e barra del titolo più sottile.
+• Privacy: il controllo di inattività legge solo da quanto tempo non c'è input, mai cosa scrivi.
 
 **Parole chiave:** timer, pausa, seduto, sedentarietà, pomodoro, focus, promemoria, analogico
 
@@ -48,7 +55,14 @@ A minimalist black analog timer that keeps you from sitting too long.
 
 Made by nextquo.com, which builds custom websites and apps.
 
-**What's new:** First release.
+**What's new:**
+• "Are you still there?": if you step away from your PC (no keyboard or mouse input for a few minutes, 5 by default and configurable), a card appears on every monitor, small at first and then bigger, with a countdown. Move the mouse and it goes away; otherwise the timer pauses and the time you were away counts as a break, not sitting time.
+• When you're back, the first keyboard or mouse input restarts the timer as a new work cycle (optional for manual pauses too).
+• Customizable card: position on screen, two-color gradient and an optional soft sound, with a test button.
+• During a break the dial shows how long it has lasted, with a Resume button.
+• Easier-to-see goal marker: a triangle pointing at the dial tick, next to the line across the ring.
+• More compact window (about 10% smaller) and a tighter title bar.
+• Privacy: the inactivity check only reads how long it has been since the last input, never what you type.
 
 **Keywords:** timer, break, sitting, sedentary, pomodoro, focus, reminder, analog
 
@@ -72,7 +86,14 @@ Un minuteur analogique noir et minimaliste pour ne pas rester assis trop longtem
 
 Réalisé par nextquo.com, qui crée des sites web et des applications sur mesure.
 
-**Nouveautés :** Première version.
+**Nouveautés :**
+• « Vous êtes toujours là ? » : si vous vous éloignez du PC (aucune saisie clavier ou souris pendant quelques minutes, 5 par défaut, réglable), une carte apparaît sur chaque écran, d'abord petite puis plus grande, avec un compte à rebours. Bougez la souris et elle disparaît ; sinon le minuteur se met en pause et le temps d'absence compte comme une pause, pas comme du temps assis.
+• À votre retour, la première saisie clavier ou souris relance le minuteur comme un nouveau cycle de travail (option aussi pour les pauses manuelles).
+• Carte personnalisable : position à l'écran, dégradé de deux couleurs et son doux optionnel, avec un bouton de test.
+• Pendant une pause, le cadran indique sa durée, avec un bouton Reprendre.
+• Repère d'objectif plus visible : un triangle pointant vers la graduation du cadran, à côté du trait sur l'anneau.
+• Fenêtre plus compacte (environ 10 % de moins) et barre de titre plus fine.
+• Confidentialité : la détection d'inactivité lit seulement le temps écoulé depuis la dernière saisie, jamais ce que vous tapez.
 
 **Mots-clés :** minuteur, pause, assis, sédentarité, pomodoro, concentration, rappel, analogique
 
@@ -96,7 +117,14 @@ Un temporizador analógico, negro y minimalista, para no pasar demasiado tiempo 
 
 Creado por nextquo.com, que desarrolla sitios web y apps a medida.
 
-**Novedades:** Primera versión.
+**Novedades:**
+• «¿Sigues ahí?»: si te alejas del PC (sin teclado ni ratón durante unos minutos, 5 por defecto y configurable), aparece una tarjeta en cada monitor, primero pequeña y luego más grande, con cuenta atrás. Mueve el ratón y desaparece; si no, el temporizador se pausa y el tiempo de ausencia cuenta como descanso, no como estar sentado.
+• Al volver, la primera pulsación o movimiento del ratón reinicia el temporizador como un nuevo ciclo de trabajo (opcional también para pausas manuales).
+• Tarjeta personalizable: posición en pantalla, degradado de dos colores y sonido suave opcional, con botón de prueba.
+• Durante un descanso, la esfera muestra cuánto dura, con un botón Reanudar.
+• Marcador de objetivo más visible: un triángulo que apunta a la marca de la esfera, junto a la línea sobre el anillo.
+• Ventana más compacta (un 10 % menos) y barra de título más fina.
+• Privacidad: la detección de inactividad solo lee cuánto tiempo pasó desde la última entrada, nunca lo que escribes.
 
 **Palabras clave:** temporizador, pausa, sentado, sedentarismo, pomodoro, concentración, recordatorio, analógico
 
